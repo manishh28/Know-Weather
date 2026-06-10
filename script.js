@@ -22,6 +22,14 @@ const setStatus = (message, isError = false) => {
   statusMessage.classList.toggle("error", isError);
 };
 
+const setWeatherBackground = (weatherType) => {
+  const normalizedWeather = String(weatherType || "")
+    .toLowerCase()
+    .replace(/\s+/g, "-");
+
+  document.body.dataset.weather = normalizedWeather || "default";
+};
+
 const weatherCodes = {
   0: ["Clear", "Clear sky", "01d"],
   1: ["Clear", "Mainly clear", "02d"],
@@ -133,8 +141,6 @@ async function showWeather(city) {
 
   const weather = data.weather && data.weather[0] ? data.weather[0] : {};
 
-  document.body.dataset.weather = weather.main.toLowerCase();
-  
   weatherIcon.setAttribute("src", valueOrNA(weather.icon));
   weatherIcon.setAttribute("alt", valueOrNA(weather.description));
   mainTemperature.textContent = formatValue(data.main && data.main.temp, "°C");
@@ -144,6 +150,7 @@ async function showWeather(city) {
   windGust.textContent = formatValue(data.wind && data.wind.gust, " m/s");
   weatherMain.textContent = valueOrNA(weather.main);
   locationName.textContent = valueOrNA(data.name);
+  setWeatherBackground(weather.main);
   setStatus("");
   weatherButton.disabled = false;
 }

@@ -20,34 +20,100 @@ body {
   display: grid;
   place-items: center;
   padding: 32px;
-  background:
-    radial-gradient(circle at 18% 20%, rgba(242, 184, 75, 0.22), transparent 28%),
-    linear-gradient(135deg, #edf5f2 0%, var(--bg) 42%, #e9f0f6 100%);
+  position: relative;
+  overflow-x: hidden;
+  background: linear-gradient(135deg, #edf5f2 0%, var(--bg) 42%, #e9f0f6 100%);
   color: var(--ink);
   font-family:
     Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
     sans-serif;
-    body[data-weather="clear"] {
-  background: linear-gradient(135deg, #f8df8b, #9ed6ff);
+  transition: background 600ms ease, color 300ms ease;
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 600ms ease;
+}
+
+body[data-weather="clear"] {
+  background: linear-gradient(145deg, #6fc6ff 0%, #bfe9ff 48%, #ffe08a 100%);
 }
 
 body[data-weather="clouds"] {
-  background: linear-gradient(135deg, #d7dde5, #eef3f8);
+  background: linear-gradient(145deg, #8fa3b8 0%, #d9e1e8 46%, #f7fafc 100%);
 }
 
+body[data-weather="fog"] {
+  background: linear-gradient(145deg, #cbd5da 0%, #eef1f2 50%, #aebbc2 100%);
+}
+
+body[data-weather="drizzle"],
 body[data-weather="rain"] {
-  background: linear-gradient(135deg, #8fa7b8, #dbe8ee);
+  background: linear-gradient(145deg, #4e6475 0%, #8aa3b3 52%, #d7e4ea 100%);
+}
+
+body[data-weather="snow"] {
+  background: linear-gradient(145deg, #d6e8f3 0%, #f8fbff 52%, #b8cedc 100%);
 }
 
 body[data-weather="thunderstorm"] {
-  background: linear-gradient(135deg, #343946, #8b95a5);
+  background: linear-gradient(145deg, #202637 0%, #4f5d72 52%, #9ca8b7 100%);
 }
+
+body[data-weather="rain"]::before,
+body[data-weather="drizzle"]::before {
+  opacity: 0.32;
+  background: repeating-linear-gradient(
+    112deg,
+    rgba(255, 255, 255, 0.5) 0 2px,
+    transparent 2px 18px
+  );
+  background-size: 24px 32px;
+}
+
+body[data-weather="snow"]::before {
+  opacity: 0.38;
+  background:
+    radial-gradient(circle at 20% 25%, rgba(255, 255, 255, 0.85) 0 2px, transparent 3px),
+    radial-gradient(circle at 65% 35%, rgba(255, 255, 255, 0.75) 0 2px, transparent 3px),
+    radial-gradient(circle at 45% 72%, rgba(255, 255, 255, 0.8) 0 2px, transparent 3px);
+  background-size: 150px 150px;
+}
+
+body[data-weather="fog"]::before,
+body[data-weather="clouds"]::before {
+  opacity: 0.28;
+  background: repeating-linear-gradient(
+    0deg,
+    rgba(255, 255, 255, 0.34) 0 20px,
+    rgba(255, 255, 255, 0.05) 20px 42px
+  );
+}
+
+body[data-weather="thunderstorm"]::before {
+  opacity: 0.24;
+  background:
+    linear-gradient(120deg, transparent 0 40%, rgba(255, 246, 166, 0.5) 41%, transparent 45%),
+    repeating-linear-gradient(112deg, rgba(255, 255, 255, 0.18) 0 2px, transparent 2px 18px);
+}
+
+body[data-weather="rain"],
+body[data-weather="thunderstorm"] {
+  --ink: #101820;
+  --muted: #475764;
 }
 
 .weather-app {
   width: min(100%, 760px);
   display: grid;
   gap: 18px;
+  position: relative;
+  z-index: 1;
 }
 
 .search-panel,
@@ -83,9 +149,10 @@ h1 {
 }
 
 .controls {
-  display: grid;
-  grid-template-columns: 1fr auto auto;
+  display: flex;
   gap: 10px;
+  flex-wrap: wrap;
+  justify-content: flex-end;
 }
 
 .search-actions {
@@ -216,8 +283,8 @@ strong {
     flex-direction: column;
   }
 
-   .controls {
-    grid-template-columns: 1fr;
+  .search-actions {
+    justify-items: stretch;
   }
 
   .controls,
