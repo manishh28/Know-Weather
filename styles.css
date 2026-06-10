@@ -81,15 +81,13 @@ h1 {
 }
 
 input,
-select,
 button {
   min-height: 44px;
   border-radius: 8px;
   font: inherit;
 }
 
-input,
-select {
+input {
   min-width: 190px;
   border: 1px solid var(--line);
   padding: 0 14px;
@@ -210,7 +208,6 @@ strong {
 
   .controls,
   input,
-  select,
   button {
     width: 100%;
   }

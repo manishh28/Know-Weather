@@ -1,5 +1,4 @@
 const cityInput = document.getElementById("city-input");
-const citySelect = document.getElementById("city-select");
 const weatherButton = document.getElementById("get-weather-btn");
 const statusMessage = document.getElementById("status-message");
 const weatherIcon = document.getElementById("weather-icon");
@@ -151,7 +150,7 @@ window.getWeather = getWeather;
 window.showWeather = showWeather;
 
 weatherButton.addEventListener("click", () => {
-  const city = cityInput.value.trim() || citySelect.value;
+  const city = cityInput.value.trim();
 
   if (!city) {
     return;
@@ -164,12 +163,6 @@ weatherButton.addEventListener("click", () => {
 cityInput.addEventListener("keydown", (event) => {
   if (event.key === "Enter") {
     weatherButton.click();
-  }
-});
-
-citySelect.addEventListener("change", () => {
-  if (citySelect.value) {
-    cityInput.value = "";
   }
 });
 
