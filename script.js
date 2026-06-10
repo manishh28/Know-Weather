@@ -1,5 +1,7 @@
+const cityInput = document.getElementById("city-input");
 const citySelect = document.getElementById("city-select");
 const weatherButton = document.getElementById("get-weather-btn");
+const statusMessage = document.getElementById("status-message");
 const weatherIcon = document.getElementById("weather-icon");
 const mainTemperature = document.getElementById("main-temperature");
 const feelsLike = document.getElementById("feels-like");
@@ -10,6 +12,16 @@ const weatherMain = document.getElementById("weather-main");
 const locationName = document.getElementById("location");
 
 const valueOrNA = (value) => (value === undefined || value === null ? "N/A" : value);
+const formatValue = (value, unit = "") => {
+  const safeValue = valueOrNA(value);
+
+  return safeValue === "N/A" ? safeValue : `${safeValue}${unit}`;
+};
+
+const setStatus = (message, isError = false) => {
+  statusMessage.textContent = message;
+  statusMessage.classList.toggle("error", isError);
+};
 
 const weatherCodes = {
   0: ["Clear", "Clear sky", "01d"],
@@ -98,16 +110,25 @@ async function getWeather(city) {
 }
 
 async function showWeather(city) {
+  const searchCity = city.trim();
   let data;
 
+  if (!searchCity) {
+    return;
+  }
+
+  setStatus("Loading weather...");
+  weatherButton.disabled = true;
+
   try {
-    data = await window.getWeather(city);
+    data = await window.getWeather(searchCity);
   } catch (error) {
     data = undefined;
   }
 
   if (data === undefined) {
-    alert("Something went wrong, please try again later");
+    setStatus("Something went wrong, please try again later.", true);
+    weatherButton.disabled = false;
     return;
   }
 
@@ -115,24 +136,46 @@ async function showWeather(city) {
 
   weatherIcon.setAttribute("src", valueOrNA(weather.icon));
   weatherIcon.setAttribute("alt", valueOrNA(weather.description));
-  mainTemperature.textContent = valueOrNA(data.main && data.main.temp);
-  feelsLike.textContent = valueOrNA(data.main && data.main.feels_like);
-  humidity.textContent = valueOrNA(data.main && data.main.humidity);
-  wind.textContent = valueOrNA(data.wind && data.wind.speed);
-  windGust.textContent = valueOrNA(data.wind && data.wind.gust);
+  mainTemperature.textContent = formatValue(data.main && data.main.temp, "°C");
+  feelsLike.textContent = formatValue(data.main && data.main.feels_like, "°C");
+  humidity.textContent = formatValue(data.main && data.main.humidity, "%");
+  wind.textContent = formatValue(data.wind && data.wind.speed, " m/s");
+  windGust.textContent = formatValue(data.wind && data.wind.gust, " m/s");
   weatherMain.textContent = valueOrNA(weather.main);
   locationName.textContent = valueOrNA(data.name);
+  setStatus("");
+  weatherButton.disabled = false;
 }
 
 window.getWeather = getWeather;
 window.showWeather = showWeather;
 
 weatherButton.addEventListener("click", () => {
-  const selectedCity = citySelect.value;
+  const city = cityInput.value.trim() || citySelect.value;
 
-  if (!selectedCity) {
+  if (!city) {
     return;
   }
 
-  window.showWeather(selectedCity);
+  localStorage.setItem("lastCity", city);
+  window.showWeather(city);
 });
+
+cityInput.addEventListener("keydown", (event) => {
+  if (event.key === "Enter") {
+    weatherButton.click();
+  }
+});
+
+citySelect.addEventListener("change", () => {
+  if (citySelect.value) {
+    cityInput.value = "";
+  }
+});
+
+const lastCity = localStorage.getItem("lastCity");
+
+if (lastCity) {
+  cityInput.value = lastCity;
+  window.showWeather(lastCity);
+}
