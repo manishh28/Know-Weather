@@ -27,6 +27,21 @@ body {
   font-family:
     Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
     sans-serif;
+    body[data-weather="clear"] {
+  background: linear-gradient(135deg, #f8df8b, #9ed6ff);
+}
+
+body[data-weather="clouds"] {
+  background: linear-gradient(135deg, #d7dde5, #eef3f8);
+}
+
+body[data-weather="rain"] {
+  background: linear-gradient(135deg, #8fa7b8, #dbe8ee);
+}
+
+body[data-weather="thunderstorm"] {
+  background: linear-gradient(135deg, #343946, #8b95a5);
+}
 }
 
 .weather-app {
@@ -68,10 +83,9 @@ h1 {
 }
 
 .controls {
-  display: flex;
+  display: grid;
+  grid-template-columns: 1fr auto auto;
   gap: 10px;
-  flex-wrap: wrap;
-  justify-content: flex-end;
 }
 
 .search-actions {
@@ -202,8 +216,8 @@ strong {
     flex-direction: column;
   }
 
-  .search-actions {
-    justify-items: stretch;
+   .controls {
+    grid-template-columns: 1fr;
   }
 
   .controls,

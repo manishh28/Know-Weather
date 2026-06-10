@@ -133,6 +133,8 @@ async function showWeather(city) {
 
   const weather = data.weather && data.weather[0] ? data.weather[0] : {};
 
+  document.body.dataset.weather = weather.main.toLowerCase();
+  
   weatherIcon.setAttribute("src", valueOrNA(weather.icon));
   weatherIcon.setAttribute("alt", valueOrNA(weather.description));
   mainTemperature.textContent = formatValue(data.main && data.main.temp, "°C");
