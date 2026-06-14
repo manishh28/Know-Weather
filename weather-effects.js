@@ -15,9 +15,8 @@
   resize();
   window.addEventListener("resize", resize);
  
-  /* ---------------- Sun (DOM element, CSS-animated) ---------------- */
   let sunEl = null;
- 
+  let sunTimes = null; 
   function injectSunStyles() {
     if (document.getElementById("weather-sun-styles")) return;
     const style = document.createElement("style");
@@ -32,8 +31,13 @@
         border-radius: 50%;
         background: radial-gradient(circle, #fff8d6 0%, #ffd166 45%, rgba(255,209,102,0) 72%);
         box-shadow: 0 0 70px 35px rgba(255, 209, 102, 0.55);
-        z-index: 0;
+        z-index: 5;
         pointer-events: none;
+        transition: opacity 800ms ease;
+      }
+ 
+      /* Decorative fallback loop, used until real sun times are known */
+      #weather-sun.decorative {
         animation: weather-sun-arc 70s linear infinite;
       }
  
@@ -61,7 +65,8 @@
     if (sunEl) return;
     sunEl = document.createElement("div");
     sunEl.id = "weather-sun";
-    document.body.prepend(sunEl);
+    sunEl.classList.add("decorative"); 
+    document.body.appendChild(sunEl); 
   }
  
   function hideSun() {
@@ -71,7 +76,39 @@
     }
   }
  
-  /* ---------------- Particle setup ---------------- */
+  
+  window.setSunTimes = function (sunriseStr, sunsetStr, nowStr) {
+    if (!sunriseStr || !sunsetStr || !nowStr) return;
+    sunTimes = {
+      sunrise: new Date(sunriseStr).getTime(),
+      sunset: new Date(sunsetStr).getTime(),
+      locationNow: new Date(nowStr).getTime(),
+      fetchedAtMs: Date.now(),
+    };
+    if (sunEl) sunEl.classList.remove("decorative");
+  };
+ 
+  function updateSunPosition() {
+    if (!sunEl || !sunTimes) return;
+ 
+    const elapsedSinceFetch = Date.now() - sunTimes.fetchedAtMs;
+    const now = sunTimes.locationNow + elapsedSinceFetch;
+    const dayLength = sunTimes.sunset - sunTimes.sunrise;
+ 
+    if (now < sunTimes.sunrise || now > sunTimes.sunset || dayLength <= 0) {
+      sunEl.style.opacity = "0";
+      return;
+    }
+ 
+    const percent = (now - sunTimes.sunrise) / dayLength; 
+    const left = percent * 100; 
+    const top = 60 - Math.sin(percent * Math.PI) * 54; 
+ 
+    sunEl.style.left = `${left}%`;
+    sunEl.style.top = `${top}%`;
+    sunEl.style.opacity = "1";
+  }
+ 
   function spawn(effect) {
     const w = canvas.width;
     const h = canvas.height;
@@ -86,7 +123,7 @@
           y: Math.random() * h,
           len: 14 + Math.random() * 22,
           speed: 10 + Math.random() * 10,
-          wind: 2 + Math.random() * 1.5, // horizontal drift, gives the "angled rain" look
+          wind: 2 + Math.random() * 1.5,
           opacity: 0.15 + Math.random() * 0.35,
           width: Math.random() < 0.3 ? 2 : 1,
         });
@@ -116,7 +153,6 @@
     }
   }
  
-  /* ---------------- Drawing ---------------- */
   function draw() {
     const w = canvas.width;
     const h = canvas.height;
@@ -144,7 +180,6 @@
         }
       });
  
-      // splash ripples where drops land
       for (let i = splashes.length - 1; i >= 0; i--) {
         const s = splashes[i];
         ctx.beginPath();
@@ -182,7 +217,6 @@
       });
     }
  
-    // Lightning flashes for thunderstorms
     if (currentEffect === "thunderstorm") {
       if (Math.random() < 0.012) {
         flashOpacity = 0.5 + Math.random() * 0.35;
@@ -197,19 +231,20 @@
  
   function loop() {
     draw();
+    updateSunPosition();
     requestAnimationFrame(loop);
   }
   loop();
  
-  /* ---------------- Public API ---------------- */
   window.setWeatherEffect = function (weatherKey) {
     const known = ["rain", "drizzle", "snow", "thunderstorm", "clouds", "fog"];
     const effect = known.includes(weatherKey) ? weatherKey : "default";
-    if (effect === currentEffect) return;
-    currentEffect = effect;
-    flashOpacity = 0;
-    spawn(effect);
-    if (effect === "default") ctx.clearRect(0, 0, canvas.width, canvas.height);
+    if (effect !== currentEffect) {
+      currentEffect = effect;
+      flashOpacity = 0;
+      spawn(effect);
+      if (effect === "default") ctx.clearRect(0, 0, canvas.width, canvas.height);
+    }
  
     if (effect === "default" || weatherKey === "clear") {
       showSun();
@@ -218,6 +253,5 @@
     }
   };
  
-  // Show sun by default until real weather data arrives
   showSun();
 })();
