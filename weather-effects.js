@@ -166,7 +166,7 @@
     if (currentEffect === "rain" || currentEffect === "drizzle" || currentEffect === "thunderstorm") {
       particles.forEach((p) => {
         ctx.beginPath();
-        ctx.strokeStyle = `rgba(210,225,245,${p.opacity})`;
+        ctx.strokeStyle = `rgba(70,100,140,${p.opacity + 0.25})`;
         ctx.lineWidth = p.width;
         ctx.moveTo(p.x, p.y);
         ctx.lineTo(p.x + p.wind * 2.5, p.y + p.len);
@@ -188,7 +188,7 @@
       for (let i = splashes.length - 1; i >= 0; i--) {
         const s = splashes[i];
         ctx.beginPath();
-        ctx.strokeStyle = `rgba(220,232,250,${s.opacity})`;
+        ctx.strokeStyle = `rgba(70,100,140,${s.opacity})`;
         ctx.lineWidth = 1;
         ctx.ellipse(s.x, s.y, s.r, s.r * 0.35, 0, 0, Math.PI * 2);
         ctx.stroke();
