@@ -40,6 +40,17 @@ body::before {
   transition: opacity 600ms ease;
 }
 
+/* Animated weather canvas: sits above the gradient/::before
+   patterns, below the main card */
+#weather-canvas {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+  pointer-events: none;
+}
+
 body[data-weather="clear"] {
   background: linear-gradient(145deg, #6fc6ff 0%, #bfe9ff 48%, #ffe08a 100%);
 }
