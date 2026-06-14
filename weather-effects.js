@@ -4,6 +4,7 @@
  
   const ctx = canvas.getContext("2d");
   let particles = [];
+  let splashes = [];
   let currentEffect = "default";
   let flashOpacity = 0;
  
@@ -14,20 +15,80 @@
   resize();
   window.addEventListener("resize", resize);
  
+  /* ---------------- Sun (DOM element, CSS-animated) ---------------- */
+  let sunEl = null;
+ 
+  function injectSunStyles() {
+    if (document.getElementById("weather-sun-styles")) return;
+    const style = document.createElement("style");
+    style.id = "weather-sun-styles";
+    style.textContent = `
+      #weather-sun {
+        position: fixed;
+        top: 55%;
+        left: -12%;
+        width: 90px;
+        height: 90px;
+        border-radius: 50%;
+        background: radial-gradient(circle, #fff8d6 0%, #ffd166 45%, rgba(255,209,102,0) 72%);
+        box-shadow: 0 0 70px 35px rgba(255, 209, 102, 0.55);
+        z-index: 0;
+        pointer-events: none;
+        animation: weather-sun-arc 70s linear infinite;
+      }
+ 
+      @keyframes weather-sun-arc {
+        0%   { left: -12%; top: 60%; opacity: 0; }
+        8%   { opacity: 1; }
+        50%  { left: 50%;  top: 6%;  }
+        92%  { opacity: 1; }
+        100% { left: 112%; top: 60%; opacity: 0; }
+      }
+ 
+      @media (max-width: 680px) {
+        #weather-sun {
+          width: 60px;
+          height: 60px;
+          box-shadow: 0 0 50px 24px rgba(255, 209, 102, 0.5);
+        }
+      }
+    `;
+    document.head.appendChild(style);
+  }
+ 
+  function showSun() {
+    injectSunStyles();
+    if (sunEl) return;
+    sunEl = document.createElement("div");
+    sunEl.id = "weather-sun";
+    document.body.prepend(sunEl);
+  }
+ 
+  function hideSun() {
+    if (sunEl) {
+      sunEl.remove();
+      sunEl = null;
+    }
+  }
+ 
+  /* ---------------- Particle setup ---------------- */
   function spawn(effect) {
     const w = canvas.width;
     const h = canvas.height;
     particles = [];
+    splashes = [];
  
     if (effect === "rain" || effect === "drizzle" || effect === "thunderstorm") {
-      const count = effect === "thunderstorm" ? 180 : effect === "rain" ? 120 : 70;
+      const count = effect === "thunderstorm" ? 200 : effect === "rain" ? 140 : 80;
       for (let i = 0; i < count; i++) {
         particles.push({
           x: Math.random() * w,
           y: Math.random() * h,
-          len: 10 + Math.random() * 20,
-          speed: 9 + Math.random() * 9,
+          len: 14 + Math.random() * 22,
+          speed: 10 + Math.random() * 10,
+          wind: 2 + Math.random() * 1.5, // horizontal drift, gives the "angled rain" look
           opacity: 0.15 + Math.random() * 0.35,
+          width: Math.random() < 0.3 ? 2 : 1,
         });
       }
     } else if (effect === "snow") {
@@ -55,6 +116,7 @@
     }
   }
  
+  /* ---------------- Drawing ---------------- */
   function draw() {
     const w = canvas.width;
     const h = canvas.height;
@@ -64,17 +126,36 @@
       particles.forEach((p) => {
         ctx.beginPath();
         ctx.strokeStyle = `rgba(210,225,245,${p.opacity})`;
-        ctx.lineWidth = 1;
+        ctx.lineWidth = p.width;
         ctx.moveTo(p.x, p.y);
-        ctx.lineTo(p.x + 2, p.y + p.len);
+        ctx.lineTo(p.x + p.wind * 2.5, p.y + p.len);
         ctx.stroke();
+ 
         p.y += p.speed;
-        p.x += 1;
+        p.x += p.wind;
+ 
         if (p.y > h) {
+          splashes.push({ x: p.x, y: h - 2, r: 1, opacity: 0.45 });
           p.y = -20;
           p.x = Math.random() * w;
         }
+        if (p.x > w + 20) {
+          p.x = -20;
+        }
       });
+ 
+      // splash ripples where drops land
+      for (let i = splashes.length - 1; i >= 0; i--) {
+        const s = splashes[i];
+        ctx.beginPath();
+        ctx.strokeStyle = `rgba(220,232,250,${s.opacity})`;
+        ctx.lineWidth = 1;
+        ctx.ellipse(s.x, s.y, s.r, s.r * 0.35, 0, 0, Math.PI * 2);
+        ctx.stroke();
+        s.r += 1.4;
+        s.opacity -= 0.05;
+        if (s.opacity <= 0) splashes.splice(i, 1);
+      }
     } else if (currentEffect === "snow") {
       particles.forEach((p) => {
         ctx.beginPath();
@@ -120,7 +201,7 @@
   }
   loop();
  
-  // Maps your existing data-weather values to animation sets
+  /* ---------------- Public API ---------------- */
   window.setWeatherEffect = function (weatherKey) {
     const known = ["rain", "drizzle", "snow", "thunderstorm", "clouds", "fog"];
     const effect = known.includes(weatherKey) ? weatherKey : "default";
@@ -129,5 +210,14 @@
     flashOpacity = 0;
     spawn(effect);
     if (effect === "default") ctx.clearRect(0, 0, canvas.width, canvas.height);
+ 
+    if (effect === "default" || weatherKey === "clear") {
+      showSun();
+    } else {
+      hideSun();
+    }
   };
+ 
+  // Show sun by default until real weather data arrives
+  showSun();
 })();
