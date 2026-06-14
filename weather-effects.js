@@ -15,8 +15,10 @@
   resize();
   window.addEventListener("resize", resize);
  
+  /* ---------------- Sun (DOM element) ---------------- */
   let sunEl = null;
-  let sunTimes = null; 
+  let sunTimes = null; // { sunrise, sunset, locationNow, fetchedAtMs } all in ms
+ 
   function injectSunStyles() {
     if (document.getElementById("weather-sun-styles")) return;
     const style = document.createElement("style");
@@ -65,8 +67,8 @@
     if (sunEl) return;
     sunEl = document.createElement("div");
     sunEl.id = "weather-sun";
-    sunEl.classList.add("decorative"); 
-    document.body.appendChild(sunEl); 
+    sunEl.classList.add("decorative"); // fallback until real times arrive
+    document.body.appendChild(sunEl); // appended last -> sits above other content
   }
  
   function hideSun() {
@@ -76,7 +78,8 @@
     }
   }
  
-  
+  // Called from script.js with the city's local sunrise/sunset and
+  // its current local time, all as ISO-ish strings from Open-Meteo.
   window.setSunTimes = function (sunriseStr, sunsetStr, nowStr) {
     if (!sunriseStr || !sunsetStr || !nowStr) return;
     sunTimes = {
@@ -100,15 +103,16 @@
       return;
     }
  
-    const percent = (now - sunTimes.sunrise) / dayLength; 
-    const left = percent * 100; 
-    const top = 60 - Math.sin(percent * Math.PI) * 54; 
+    const percent = (now - sunTimes.sunrise) / dayLength; // 0 (sunrise) -> 1 (sunset)
+    const left = percent * 100; // sweeps across full width
+    const top = 60 - Math.sin(percent * Math.PI) * 54; // arcs up then down
  
     sunEl.style.left = `${left}%`;
     sunEl.style.top = `${top}%`;
     sunEl.style.opacity = "1";
   }
  
+  /* ---------------- Particle setup ---------------- */
   function spawn(effect) {
     const w = canvas.width;
     const h = canvas.height;
@@ -153,6 +157,7 @@
     }
   }
  
+  /* ---------------- Drawing ---------------- */
   function draw() {
     const w = canvas.width;
     const h = canvas.height;
@@ -236,6 +241,7 @@
   }
   loop();
  
+  /* ---------------- Public API ---------------- */
   window.setWeatherEffect = function (weatherKey) {
     const known = ["rain", "drizzle", "snow", "thunderstorm", "clouds", "fog"];
     const effect = known.includes(weatherKey) ? weatherKey : "default";
@@ -253,5 +259,6 @@
     }
   };
  
+  // Show sun (decorative loop) by default until real weather data arrives
   showSun();
 })();
