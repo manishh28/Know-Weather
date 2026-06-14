@@ -85,7 +85,7 @@ async function getWeather(city) {
     }
 
     const weatherResponse = await fetch(
-      `https://api.open-meteo.com/v1/forecast?latitude=${place.latitude}&longitude=${place.longitude}&current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m,wind_gusts_10m&wind_speed_unit=ms&timezone=auto`
+      `https://api.open-meteo.com/v1/forecast?latitude=${place.latitude}&longitude=${place.longitude}&current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m,wind_gusts_10m&daily=sunrise,sunset&wind_speed_unit=ms&timezone=auto`
     );
 
     if (!weatherResponse.ok) {
@@ -94,6 +94,7 @@ async function getWeather(city) {
 
     const weatherData = await weatherResponse.json();
     const current = weatherData.current || {};
+    const daily = weatherData.daily || {};
     const condition = weatherCodes[current.weather_code] || ["N/A", "N/A", "01d"];
 
     return {
@@ -112,6 +113,11 @@ async function getWeather(city) {
       wind: {
         speed: current.wind_speed_10m,
         gust: current.wind_gusts_10m,
+      },
+      sun: {
+        sunrise: daily.sunrise && daily.sunrise[0],
+        sunset: daily.sunset && daily.sunset[0],
+        now: current.time,
       },
       name: place.country ? `${place.name}, ${place.country}` : place.name,
     };
@@ -155,6 +161,11 @@ async function showWeather(city) {
   weatherMain.textContent = valueOrNA(weather.main);
   locationName.textContent = valueOrNA(data.name);
   setWeatherBackground(weather.main);
+
+  if (data.sun && window.setSunTimes) {
+    window.setSunTimes(data.sun.sunrise, data.sun.sunset, data.sun.now);
+  }
+
   setStatus("");
   weatherButton.disabled = false;
 }
