@@ -28,6 +28,10 @@ const setWeatherBackground = (weatherType) => {
     .replace(/\s+/g, "-");
 
   document.body.dataset.weather = normalizedWeather || "default";
+
+  if (window.setWeatherEffect) {
+    window.setWeatherEffect(normalizedWeather || "default");
+  }
 };
 
 const weatherCodes = {
