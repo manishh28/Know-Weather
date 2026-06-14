@@ -8,8 +8,8 @@
   let currentEffect = "default";
   let flashOpacity = 0;
   const DAY_MS = 24 * 60 * 60 * 1000;
-  const SUN_VISIBLE_OPACITY = 0.72;
-  const MOON_VISIBLE_OPACITY = 0.88;
+  const SUN_VISIBLE_OPACITY = 0.58;
+  const MOON_VISIBLE_OPACITY = 0.7;
  
   function resize() {
     canvas.width = window.innerWidth;
@@ -33,30 +33,37 @@
         position: fixed;
         top: 55%;
         left: -12%;
-        z-index: 5;
+        z-index: 0;
         pointer-events: none;
         opacity: 0;
         transition: opacity 800ms ease;
       }
 
       #weather-sun {
-        width: 90px;
-        height: 90px;
+        width: 128px;
+        height: 128px;
         border-radius: 50%;
-        background: radial-gradient(circle, rgba(255,248,214,0.88) 0%, rgba(255,209,102,0.72) 45%, rgba(255,209,102,0) 72%);
-        box-shadow: 0 0 70px 35px rgba(255, 209, 102, 0.32);
+        background:
+          radial-gradient(circle at 34% 30%, rgba(255, 255, 236, 0.82) 0 11%, transparent 18%),
+          radial-gradient(circle, rgba(255, 245, 187, 0.74) 0%, rgba(255, 201, 76, 0.52) 45%, rgba(255, 177, 66, 0) 72%);
+        box-shadow:
+          0 0 86px 42px rgba(255, 209, 102, 0.22),
+          0 0 160px 72px rgba(255, 185, 80, 0.12);
       }
 
       #weather-moon {
-        width: 74px;
-        height: 74px;
+        width: 108px;
+        height: 108px;
         border-radius: 50%;
         background:
-          radial-gradient(circle at 31% 28%, rgba(177, 193, 209, 0.65) 0 6px, transparent 7px),
-          radial-gradient(circle at 62% 38%, rgba(158, 176, 194, 0.5) 0 5px, transparent 6px),
-          radial-gradient(circle at 45% 66%, rgba(170, 187, 204, 0.5) 0 7px, transparent 8px),
-          linear-gradient(145deg, #fbfdff 0%, #dce8f3 55%, #aabfd4 100%);
-        box-shadow: 0 0 46px 20px rgba(210, 230, 255, 0.34);
+          radial-gradient(circle at 31% 28%, rgba(149, 166, 184, 0.58) 0 8px, transparent 9px),
+          radial-gradient(circle at 62% 38%, rgba(142, 160, 180, 0.44) 0 7px, transparent 8px),
+          radial-gradient(circle at 45% 66%, rgba(154, 172, 190, 0.48) 0 10px, transparent 11px),
+          radial-gradient(circle at 68% 70%, rgba(180, 196, 214, 0.36) 0 5px, transparent 6px),
+          linear-gradient(145deg, rgba(251, 253, 255, 0.92) 0%, rgba(220, 232, 243, 0.78) 55%, rgba(170, 191, 212, 0.68) 100%);
+        box-shadow:
+          0 0 62px 26px rgba(210, 230, 255, 0.26),
+          0 0 120px 48px rgba(138, 180, 230, 0.1);
         overflow: hidden;
       }
 
@@ -96,15 +103,19 @@
  
       @media (max-width: 680px) {
         #weather-sun {
-          width: 60px;
-          height: 60px;
-          box-shadow: 0 0 50px 24px rgba(255, 209, 102, 0.3);
+          width: 86px;
+          height: 86px;
+          box-shadow:
+            0 0 58px 28px rgba(255, 209, 102, 0.2),
+            0 0 110px 48px rgba(255, 185, 80, 0.1);
         }
 
         #weather-moon {
-          width: 52px;
-          height: 52px;
-          box-shadow: 0 0 36px 16px rgba(210, 230, 255, 0.32);
+          width: 76px;
+          height: 76px;
+          box-shadow:
+            0 0 44px 18px rgba(210, 230, 255, 0.24),
+            0 0 84px 34px rgba(138, 180, 230, 0.1);
         }
       }
     `;
@@ -135,6 +146,10 @@
       moonEl = null;
     }
   }
+
+  function setTimeOfDay(isDaytime) {
+    document.body.dataset.timeOfDay = isDaytime ? "day" : "night";
+  }
  
   // Called from script.js with the city's local sunrise/sunset and
   // its current local time, all as ISO-ish strings from Open-Meteo.
@@ -146,12 +161,16 @@
       locationNow: new Date(nowStr).getTime(),
       fetchedAtMs: Date.now(),
     };
+    const dayLength = sunTimes.sunset - sunTimes.sunrise;
+    if (dayLength > 0) {
+      setTimeOfDay(sunTimes.locationNow >= sunTimes.sunrise && sunTimes.locationNow <= sunTimes.sunset);
+    }
     if (sunEl) sunEl.classList.remove("decorative");
     if (moonEl) moonEl.classList.remove("decorative");
   };
  
   function updateCelestialPositions() {
-    if ((!sunEl && !moonEl) || !sunTimes) return;
+    if (!sunTimes) return;
  
     const elapsedSinceFetch = Date.now() - sunTimes.fetchedAtMs;
     const now = sunTimes.locationNow + elapsedSinceFetch;
@@ -161,8 +180,11 @@
     if (dayLength <= 0) {
       if (sunEl) sunEl.style.opacity = "0";
       if (moonEl) moonEl.style.opacity = "0";
+      delete document.body.dataset.timeOfDay;
       return;
     }
+
+    setTimeOfDay(isDaytime);
  
     if (isDaytime) {
       const percent = (now - sunTimes.sunrise) / dayLength; // 0 (sunrise) -> 1 (sunset)
