@@ -7,13 +7,13 @@
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
+    <canvas id="weather-canvas"></canvas>
     <main class="weather-app">
       <section class="search-panel" aria-label="Weather search">
         <div>
           <p class="eyebrow">City forecast</p>
           <h1>Know Weather</h1>
         </div>
-
         <div class="search-actions">
           <div class="controls">
             <input
@@ -27,7 +27,6 @@
           <p id="status-message" class="status-message"></p>
         </div>
       </section>
-
       <section id="weather-card" class="weather-card" aria-live="polite">
         <div class="primary-weather">
           <img id="weather-icon" src="" alt="" />
@@ -36,7 +35,6 @@
             <p id="weather-main" class="weather-main">N/A</p>
           </div>
         </div>
-
         <div class="temperature-row">
           <div>
             <span class="label">Temperature</span>
@@ -47,7 +45,6 @@
             <strong id="feels-like">N/A</strong>
           </div>
         </div>
-
         <div class="details-grid">
           <div>
             <span class="label">Humidity</span>
@@ -64,7 +61,7 @@
         </div>
       </section>
     </main>
-
+    <script src="weather-effects.js"></script>
     <script src="script.js"></script>
   </body>
 </html>
