@@ -40,18 +40,6 @@ body::before {
   transition: opacity 600ms ease;
 }
 
-body::after {
-  content: "";
-  position: fixed;
-  inset: 0;
-  z-index: 0;
-  pointer-events: none;
-  opacity: 0;
-  transition: opacity 600ms ease;
-}
-
-/* Animated weather canvas: sits above the gradient/::before
-   patterns, below the main card */
 #weather-canvas {
   position: fixed;
   inset: 0;
@@ -127,84 +115,6 @@ body[data-weather="rain"],
 body[data-weather="thunderstorm"] {
   --ink: #101820;
   --muted: #475764;
-}
-
-body[data-time-of-day="night"] {
-  color-scheme: dark;
-  --ink: #edf5ff;
-  --muted: #b4c3d6;
-  --line: rgba(195, 213, 235, 0.24);
-  --panel: #101928;
-  --accent: #68c1d7;
-  --accent-dark: #8cdced;
-  background: linear-gradient(145deg, #060914 0%, #121c35 48%, #251d35 100%);
-}
-
-body[data-time-of-day="night"][data-weather="clear"] {
-  background: linear-gradient(145deg, #050712 0%, #101b3d 48%, #2b213f 100%);
-}
-
-body[data-time-of-day="night"][data-weather="clouds"] {
-  background: linear-gradient(145deg, #0e1320 0%, #273043 50%, #3a4852 100%);
-}
-
-body[data-time-of-day="night"][data-weather="fog"] {
-  background: linear-gradient(145deg, #151c25 0%, #3a4652 52%, #202935 100%);
-}
-
-body[data-time-of-day="night"][data-weather="drizzle"],
-body[data-time-of-day="night"][data-weather="rain"] {
-  background: linear-gradient(145deg, #050b12 0%, #182636 52%, #334657 100%);
-}
-
-body[data-time-of-day="night"][data-weather="snow"] {
-  background: linear-gradient(145deg, #0d1828 0%, #253b58 52%, #536577 100%);
-}
-
-body[data-time-of-day="night"][data-weather="thunderstorm"] {
-  background: linear-gradient(145deg, #03050b 0%, #17192a 52%, #34233a 100%);
-}
-
-body[data-time-of-day="night"]::before {
-  opacity: 0.16;
-}
-
-body[data-time-of-day="night"]::after {
-  opacity: 0.52;
-  background:
-    radial-gradient(circle at 12% 18%, rgba(255, 255, 255, 0.95) 0 1px, transparent 2px),
-    radial-gradient(circle at 34% 42%, rgba(213, 232, 255, 0.75) 0 1px, transparent 2px),
-    radial-gradient(circle at 72% 22%, rgba(255, 255, 255, 0.8) 0 1px, transparent 2px),
-    radial-gradient(circle at 86% 66%, rgba(208, 226, 255, 0.65) 0 1px, transparent 2px);
-  background-size: 240px 190px;
-}
-
-body[data-time-of-day="night"] .search-panel,
-body[data-time-of-day="night"] .weather-card {
-  background: rgba(14, 22, 34, 0.86);
-  box-shadow: 0 24px 68px rgba(0, 0, 0, 0.34);
-}
-
-body[data-time-of-day="night"] input {
-  color: var(--ink);
-  background: rgba(246, 250, 255, 0.08);
-}
-
-body[data-time-of-day="night"] input::placeholder {
-  color: rgba(237, 245, 255, 0.62);
-}
-
-body[data-time-of-day="night"] #weather-icon {
-  background: rgba(238, 245, 247, 0.14);
-}
-
-body[data-time-of-day="night"] .temperature-row > div,
-body[data-time-of-day="night"] .details-grid > div {
-  background: rgba(255, 255, 255, 0.06);
-}
-
-body[data-time-of-day="night"] .status-message.error {
-  color: #ff9b92;
 }
 
 .weather-app {
