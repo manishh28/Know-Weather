@@ -13,6 +13,7 @@ const highLow = document.getElementById("high-low");
 const forecastInsight = document.getElementById("forecast-insight");
 const hourlyForecast = document.getElementById("hourly-forecast");
 const dailyForecast = document.getElementById("daily-forecast");
+const DAILY_FORECAST_DAYS = 7;
 
 const valueOrNA = (value) => (value === undefined || value === null ? "N/A" : value);
 const isNumber = (value) => Number.isFinite(Number(value));
@@ -187,6 +188,7 @@ function buildHourlyForecast(hourly, daily, currentTime) {
       label: formatHour(time, offset),
       temp: hourly.temperature_2m && hourly.temperature_2m[index],
       precipitation: hourly.precipitation_probability && hourly.precipitation_probability[index],
+      main: condition[0],
       icon: iconUrl(condition[2], night),
       description: condition[1],
     };
@@ -197,7 +199,7 @@ function buildDailyForecast(daily, currentTime) {
   const dates = daily.time || [];
   const startIndex = dailyIndexForTime(daily, currentTime);
 
-  return dates.slice(startIndex, startIndex + 10).map((date, offset) => {
+  return dates.slice(startIndex, startIndex + DAILY_FORECAST_DAYS).map((date, offset) => {
     const index = startIndex + offset;
     const condition = conditionForCode(daily.weather_code && daily.weather_code[index]);
     const night = false;
@@ -207,6 +209,7 @@ function buildDailyForecast(daily, currentTime) {
       min: daily.temperature_2m_min && daily.temperature_2m_min[index],
       max: daily.temperature_2m_max && daily.temperature_2m_max[index],
       precipitation: daily.precipitation_probability_max && daily.precipitation_probability_max[index],
+      main: condition[0],
       icon: iconUrl(condition[2], night),
       description: condition[1],
     };
@@ -308,7 +311,18 @@ function renderDaily(items) {
   });
 }
 
-function forecastSummary(dailyItems) {
+function hasWeather(items, types) {
+  return items.some((item) => types.includes(item.main));
+}
+
+function maxValue(items, key) {
+  const values = items.map((item) => Number(item[key])).filter(Number.isFinite);
+  return values.length ? Math.max(...values) : null;
+}
+
+function forecastSummary(data) {
+  const dailyItems = data.daily || [];
+  const hourlyItems = data.hourly || [];
   const today = dailyItems[0];
   const tomorrow = dailyItems[1];
   if (!today || !tomorrow || !isNumber(today.max) || !isNumber(tomorrow.max)) {
@@ -317,13 +331,51 @@ function forecastSummary(dailyItems) {
 
   const todayHigh = roundTemp(today.max);
   const tomorrowHigh = roundTemp(tomorrow.max);
+  const tempChange = tomorrowHigh - todayHigh;
+  const nextHours = hourlyItems.slice(0, 8);
+  const maxNextRain = maxValue(nextHours, "precipitation");
+  const maxWeekRain = maxValue(dailyItems, "precipitation");
+  const hottestDay = dailyItems.reduce((hottest, day) => {
+    if (!hottest || Number(day.max) > Number(hottest.max)) return day;
+    return hottest;
+  }, null);
+  const weekHigh = hottestDay ? roundTemp(hottestDay.max) : null;
 
-  if (tomorrowHigh < todayHigh) {
+  if (hasWeather(nextHours, ["Thunderstorm"])) {
+    return `Thunderstorms are active nearby, with rain chances up to ${Math.round(maxNextRain || 0)}% in the next few hours.`;
+  }
+
+  if (hasWeather([today, tomorrow], ["Thunderstorm"])) {
+    return `Thunderstorm chances stay high through tomorrow, with a high near ${tomorrowHigh}\u00b0.`;
+  }
+
+  if (maxNextRain !== null && maxNextRain >= 70) {
+    return `Rain is likely in the next few hours, with chances peaking near ${Math.round(maxNextRain)}%.`;
+  }
+
+  if (hasWeather([tomorrow], ["Rain", "Drizzle", "Snow"]) || Number(tomorrow.precipitation) >= 60) {
+    return `Wet weather is likely tomorrow, with a ${Math.round(Number(tomorrow.precipitation) || 0)}% chance and a high of ${tomorrowHigh}\u00b0.`;
+  }
+
+  if (Number(tomorrow.precipitation) >= 35) {
+    return `Keep an umbrella ready tomorrow; rain chances reach ${Math.round(Number(tomorrow.precipitation))}% with a high of ${tomorrowHigh}\u00b0.`;
+  }
+
+  if (weekHigh !== null && weekHigh >= 38) {
+    return `A hot week is ahead, peaking near ${weekHigh}\u00b0 on ${hottestDay.day}.`;
+  }
+
+  if (tempChange <= -3) {
     return `Lower temperatures expected tomorrow, with a high of ${tomorrowHigh}\u00b0.`;
   }
-  if (tomorrowHigh > todayHigh) {
+  if (tempChange >= 3) {
     return `Warmer temperatures expected tomorrow, with a high of ${tomorrowHigh}\u00b0.`;
   }
+
+  if (maxWeekRain !== null && maxWeekRain >= 50) {
+    return `The week stays unsettled, with rain chances reaching ${Math.round(maxWeekRain)}% on some days.`;
+  }
+
   return `Tomorrow should feel similar, with a high near ${tomorrowHigh}\u00b0.`;
 }
 
@@ -345,7 +397,7 @@ async function getWeather(city) {
         `&hourly=temperature_2m,weather_code,precipitation_probability` +
         `&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max,sunrise,sunset` +
         `&past_days=1` +
-        `&forecast_days=10` +
+        `&forecast_days=${DAILY_FORECAST_DAYS}` +
         `&wind_speed_unit=ms` +
         `&timezone=auto`
     );
@@ -437,7 +489,7 @@ async function showWeather(city) {
   weatherMain.textContent = valueOrNA(weather.description);
   locationName.textContent = valueOrNA(data.name);
   highLow.textContent = `H:${formatTemp(data.main && data.main.temp_max)} L:${formatTemp(data.main && data.main.temp_min)}`;
-  forecastInsight.textContent = forecastSummary(data.daily || []);
+  forecastInsight.textContent = forecastSummary(data);
   renderHourly(data.hourly || []);
   renderDaily(data.daily || []);
 
