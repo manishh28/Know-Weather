@@ -48,8 +48,8 @@
         box-shadow: 0 0 70px 35px rgba(255, 209, 102, 0.4);
       }
       #weather-moon {
-        width: 64px;
-        height: 64px;
+        width: 86px;
+        height: 86px;
         opacity: 0;
         background:
           radial-gradient(circle at 38% 35%, rgba(255,255,255,0) 0 8px, rgba(160,170,190,0.35) 9px 14px, transparent 15px),
@@ -69,7 +69,7 @@
       }
       @media (max-width: 680px) {
         #weather-sun  { width: 60px; height: 60px; box-shadow: 0 0 50px 24px rgba(255,209,102,0.35); }
-        #weather-moon { width: 44px; height: 44px; box-shadow: 0 0 35px 14px rgba(214,222,240,0.3); }
+        #weather-moon { width: 68px; height: 68px; box-shadow: 0 0 35px 14px rgba(214,222,240,0.3); }
       }
     `;
     document.head.appendChild(style);
@@ -330,7 +330,7 @@
       if (effect === "default") ctx.clearRect(0, 0, canvas.width, canvas.height);
     }
 
-    if (effect === "default" || weatherKey === "clear") {
+    if (effect === "default" || weatherKey === "clear" || weatherKey === "clouds" || weatherKey === "fog") {
       showCelestialBodies();
     } else {
       hideCelestialBodies();
