@@ -419,12 +419,14 @@ async function showWeather(city) {
   const weather = data.weather && data.weather[0] ? data.weather[0] : {};
   const night = Boolean(data.isNight || (data.sun && data.sun.isNight) || isNightIcon(weather.icon));
 
-  if (weather.icon) {
-    weatherIcon.setAttribute("src", weather.icon);
-    weatherIcon.setAttribute("alt", valueOrNA(weather.description));
-  } else {
-    weatherIcon.removeAttribute("src");
-    weatherIcon.setAttribute("alt", "");
+  if (weatherIcon) {
+    if (weather.icon) {
+      weatherIcon.setAttribute("src", weather.icon);
+      weatherIcon.setAttribute("alt", valueOrNA(weather.description));
+    } else {
+      weatherIcon.removeAttribute("src");
+      weatherIcon.setAttribute("alt", "");
+    }
   }
 
   mainTemperature.textContent = formatTemp(data.main && data.main.temp);

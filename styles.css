@@ -248,21 +248,6 @@ button:disabled {
   padding: 30px 10px 20px;
 }
 
-#weather-icon {
-  position: absolute;
-  left: clamp(4px, 7vw, 70px);
-  top: 34%;
-  width: clamp(72px, 16vw, 112px);
-  height: clamp(72px, 16vw, 112px);
-  object-fit: contain;
-  opacity: 0.88;
-  filter: drop-shadow(0 18px 28px rgba(0, 0, 0, 0.22));
-}
-
-#weather-icon:not([src]) {
-  visibility: hidden;
-}
-
 .location {
   max-width: min(100%, 560px);
   overflow-wrap: anywhere;
@@ -554,13 +539,6 @@ button:disabled {
 
   .hero-weather {
     min-height: 350px;
-  }
-
-  #weather-icon {
-    left: 10px;
-    top: 40%;
-    width: 64px;
-    height: 64px;
   }
 
   .daily-panel {
