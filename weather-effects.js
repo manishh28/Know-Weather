@@ -18,6 +18,12 @@
   let sunEl = null;
   let moonEl = null;
   let sunTimes = null;
+  let isNight = document.body.dataset.period === "night";
+
+  function setPeriod(night) {
+    isNight = Boolean(night);
+    document.body.dataset.period = isNight ? "night" : "day";
+  }
 
   function injectCelestialStyles() {
     if (document.getElementById("weather-celestial-styles")) return;
@@ -28,8 +34,9 @@
         position: fixed;
         top: 55%;
         left: -12%;
-        z-index: 5;
+        z-index: 0;
         pointer-events: none;
+        transform: translate(-50%, -50%);
         transition: opacity 800ms ease;
         border-radius: 50%;
       }
@@ -68,12 +75,32 @@
     document.head.appendChild(style);
   }
 
+  function positionAlongArc(el, percent) {
+    el.style.left = `${percent * 100}%`;
+    el.style.top = `${60 - Math.sin(percent * Math.PI) * 54}%`;
+  }
+
+  function syncFallbackCelestial() {
+    if (!sunEl || !moonEl || sunTimes) return;
+
+    if (isNight) {
+      sunEl.classList.remove("decorative");
+      sunEl.style.opacity = "0";
+      positionAlongArc(moonEl, 0.72);
+      moonEl.style.opacity = "0.75";
+      return;
+    }
+
+    sunEl.classList.add("decorative");
+    sunEl.style.opacity = "";
+    moonEl.style.opacity = "0";
+  }
+
   function showCelestialBodies() {
     injectCelestialStyles();
     if (!sunEl) {
       sunEl = document.createElement("div");
       sunEl.id = "weather-sun";
-      sunEl.classList.add("decorative");
       document.body.appendChild(sunEl);
     }
     if (!moonEl) {
@@ -81,68 +108,106 @@
       moonEl.id = "weather-moon";
       document.body.appendChild(moonEl);
     }
+
+    if (sunTimes) {
+      updateCelestialPositions();
+    } else {
+      syncFallbackCelestial();
+    }
   }
 
   function hideCelestialBodies() {
-    if (sunEl) { sunEl.remove(); sunEl = null; }
-    if (moonEl) { moonEl.remove(); moonEl = null; }
+    if (sunEl) {
+      sunEl.remove();
+      sunEl = null;
+    }
+    if (moonEl) {
+      moonEl.remove();
+      moonEl = null;
+    }
   }
 
-  window.setSunTimes = function (sunriseTodayStr, sunsetTodayStr, sunriseTomorrowStr, nowStr) {
-    if (!sunriseTodayStr || !sunsetTodayStr || !sunriseTomorrowStr || !nowStr) return;
+  function parseMs(value) {
+    const ms = new Date(value).getTime();
+    return Number.isNaN(ms) ? null : ms;
+  }
+
+  window.setSunTimes = function (sun) {
+    if (!sun) return;
+
+    setPeriod(Boolean(sun.isNight));
+    const sunriseToday = parseMs(sun.sunriseToday);
+    const sunsetToday = parseMs(sun.sunsetToday);
+    const previousSunset = parseMs(sun.previousSunset);
+    const sunriseTomorrow = parseMs(sun.sunriseTomorrow);
+    const locationNow = parseMs(sun.now);
+
+    if (!sunriseToday || !sunsetToday || !sunriseTomorrow || !locationNow) {
+      sunTimes = null;
+      syncFallbackCelestial();
+      return;
+    }
+
     sunTimes = {
-      sunriseToday:    new Date(sunriseTodayStr).getTime(),
-      sunsetToday:     new Date(sunsetTodayStr).getTime(),
-      sunriseTomorrow: new Date(sunriseTomorrowStr).getTime(),
-      locationNow:     new Date(nowStr).getTime(),
-      fetchedAtMs:     Date.now(),
+      previousSunset,
+      sunriseToday,
+      sunsetToday,
+      sunriseTomorrow,
+      locationNow,
+      fetchedAtMs: Date.now(),
     };
-    if (sunEl) sunEl.classList.remove("decorative");
-  };
 
-  function positionAlongArc(el, percent) {
-    el.style.left = `${percent * 100}%`;
-    el.style.top  = `${60 - Math.sin(percent * Math.PI) * 54}%`;
-  }
+    if (sunEl) sunEl.classList.remove("decorative");
+    updateCelestialPositions();
+  };
 
   function updateCelestialPositions() {
     if (!sunTimes || !sunEl || !moonEl) return;
+
     const elapsed = Date.now() - sunTimes.fetchedAtMs;
     const now = sunTimes.locationNow + elapsed;
-    const { sunriseToday, sunsetToday, sunriseTomorrow } = sunTimes;
-    const dayLength   = sunsetToday     - sunriseToday;
-    const nightLength = sunriseTomorrow - sunsetToday;
+    const { previousSunset, sunriseToday, sunsetToday, sunriseTomorrow } = sunTimes;
+    const dayLength = sunsetToday - sunriseToday;
 
     if (now >= sunriseToday && now <= sunsetToday && dayLength > 0) {
       const percent = (now - sunriseToday) / dayLength;
+      setPeriod(false);
       positionAlongArc(sunEl, percent);
-      sunEl.style.opacity  = "0.65";
+      sunEl.style.opacity = "0.65";
       moonEl.style.opacity = "0";
-    } else if (nightLength > 0) {
-      let percent;
-      if (now > sunsetToday) {
-        percent = (now - sunsetToday) / nightLength;
-      } else {
-        percent = 1 - (sunriseToday - now) / nightLength;
-      }
-      percent = Math.max(0, Math.min(1, percent));
-      positionAlongArc(moonEl, percent);
-      moonEl.style.opacity = "0.75";
-      sunEl.style.opacity  = "0";
+      return;
     }
+
+    const nightStart = now < sunriseToday ? previousSunset : sunsetToday;
+    const nightEnd = now < sunriseToday ? sunriseToday : sunriseTomorrow;
+    const nightLength = nightEnd - nightStart;
+
+    setPeriod(true);
+    if (!nightStart || !nightEnd || nightLength <= 0) {
+      positionAlongArc(moonEl, 0.72);
+      moonEl.style.opacity = "0.75";
+      sunEl.style.opacity = "0";
+      return;
+    }
+
+    const percent = Math.max(0, Math.min(1, (now - nightStart) / nightLength));
+    positionAlongArc(moonEl, percent);
+    moonEl.style.opacity = "0.75";
+    sunEl.style.opacity = "0";
   }
 
   function spawn(effect) {
     const w = canvas.width;
     const h = canvas.height;
     particles = [];
-    splashes  = [];
+    splashes = [];
 
     if (effect === "rain" || effect === "drizzle" || effect === "thunderstorm") {
       const count = effect === "thunderstorm" ? 200 : effect === "rain" ? 140 : 80;
       for (let i = 0; i < count; i++) {
         particles.push({
-          x: Math.random() * w, y: Math.random() * h,
+          x: Math.random() * w,
+          y: Math.random() * h,
           len: 14 + Math.random() * 22,
           speed: 10 + Math.random() * 10,
           wind: 2 + Math.random() * 1.5,
@@ -153,7 +218,8 @@
     } else if (effect === "snow") {
       for (let i = 0; i < 130; i++) {
         particles.push({
-          x: Math.random() * w, y: Math.random() * h,
+          x: Math.random() * w,
+          y: Math.random() * h,
           r: 1 + Math.random() * 3,
           speed: 0.5 + Math.random() * 1.5,
           drift: Math.random() * 1.2 - 0.6,
@@ -189,7 +255,11 @@
         ctx.stroke();
         p.y += p.speed;
         p.x += p.wind;
-        if (p.y > h) { splashes.push({ x: p.x, y: h - 2, r: 1, opacity: 0.45 }); p.y = -20; p.x = Math.random() * w; }
+        if (p.y > h) {
+          splashes.push({ x: p.x, y: h - 2, r: 1, opacity: 0.45 });
+          p.y = -20;
+          p.x = Math.random() * w;
+        }
         if (p.x > w + 20) p.x = -20;
       });
       for (let i = splashes.length - 1; i >= 0; i--) {
@@ -199,7 +269,8 @@
         ctx.lineWidth = 1;
         ctx.ellipse(s.x, s.y, s.r, s.r * 0.35, 0, 0, Math.PI * 2);
         ctx.stroke();
-        s.r += 1.4; s.opacity -= 0.05;
+        s.r += 1.4;
+        s.opacity -= 0.05;
         if (s.opacity <= 0) splashes.splice(i, 1);
       }
     } else if (currentEffect === "snow") {
@@ -208,8 +279,12 @@
         ctx.fillStyle = `rgba(255,255,255,${p.opacity})`;
         ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
         ctx.fill();
-        p.y += p.speed; p.x += p.drift;
-        if (p.y > h) { p.y = -5; p.x = Math.random() * w; }
+        p.y += p.speed;
+        p.x += p.drift;
+        if (p.y > h) {
+          p.y = -5;
+          p.x = Math.random() * w;
+        }
         if (p.x > w) p.x = 0;
         if (p.x < 0) p.x = w;
       });
@@ -241,7 +316,11 @@
   }
   loop();
 
-  window.setWeatherEffect = function (weatherKey) {
+  window.setWeatherEffect = function (weatherKey, options = {}) {
+    if (typeof options.isNight === "boolean") {
+      setPeriod(options.isNight);
+    }
+
     const known = ["rain", "drizzle", "snow", "thunderstorm", "clouds", "fog"];
     const effect = known.includes(weatherKey) ? weatherKey : "default";
     if (effect !== currentEffect) {
@@ -250,6 +329,7 @@
       spawn(effect);
       if (effect === "default") ctx.clearRect(0, 0, canvas.width, canvas.height);
     }
+
     if (effect === "default" || weatherKey === "clear") {
       showCelestialBodies();
     } else {

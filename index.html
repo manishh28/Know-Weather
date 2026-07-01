@@ -6,7 +6,13 @@
     <title>Know Weather</title>
     <link rel="stylesheet" href="styles.css" />
   </head>
-  <body>
+  <body data-weather="default" data-period="day">
+    <script>
+      (() => {
+        const hour = new Date().getHours();
+        document.body.dataset.period = hour >= 6 && hour < 18 ? "day" : "night";
+      })();
+    </script>
     <canvas id="weather-canvas"></canvas>
     <main class="weather-app">
       <section class="search-panel" aria-label="Weather search">
@@ -29,7 +35,7 @@
       </section>
       <section id="weather-card" class="weather-card" aria-live="polite">
         <div class="primary-weather">
-          <img id="weather-icon" src="" alt="" />
+          <img id="weather-icon" alt="" />
           <div>
             <p id="location" class="location">Select a city</p>
             <p id="weather-main" class="weather-main">N/A</p>
