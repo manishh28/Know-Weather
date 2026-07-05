@@ -1,4 +1,5 @@
 const cityInput = document.getElementById("city-input");
+const citySuggestions = document.getElementById("city-suggestions");
 const weatherButton = document.getElementById("get-weather-btn");
 const statusMessage = document.getElementById("status-message");
 const weatherIcon = document.getElementById("weather-icon");
@@ -24,6 +25,9 @@ const DAILY_FORECAST_DAYS = 7;
 const HOURLY_FORECAST_HOURS = 24;
 const FAVORITES_KEY = "favoriteCities";
 let activePlace = null;
+let suggestionTimer = null;
+let suggestionItems = [];
+let activeSuggestionIndex = -1;
 
 const valueOrNA = (value) => (value === undefined || value === null ? "N/A" : value);
 const isNumber = (value) => Number.isFinite(Number(value));
@@ -44,6 +48,104 @@ const setStatus = (message, isError = false) => {
   statusMessage.textContent = message;
   statusMessage.classList.toggle("error", isError);
 };
+
+const cityLabel = (place) => [place.name, place.admin1, place.country]
+  .filter(Boolean)
+  .join(", ");
+
+const citySearchName = (place) => [place.name, place.country]
+  .filter(Boolean)
+  .join(", ");
+
+function hideSuggestions() {
+  if (!citySuggestions) return;
+  citySuggestions.hidden = true;
+  citySuggestions.replaceChildren();
+  suggestionItems = [];
+  activeSuggestionIndex = -1;
+  cityInput.removeAttribute("aria-activedescendant");
+}
+
+function setActiveSuggestion(index) {
+  if (!citySuggestions || !suggestionItems.length) return;
+  activeSuggestionIndex = (index + suggestionItems.length) % suggestionItems.length;
+  Array.from(citySuggestions.children).forEach((child, childIndex) => {
+    child.classList.toggle("active", childIndex === activeSuggestionIndex);
+  });
+  const activeOption = citySuggestions.children[activeSuggestionIndex];
+  if (activeOption) {
+    cityInput.setAttribute("aria-activedescendant", activeOption.id);
+    activeOption.scrollIntoView({ block: "nearest" });
+  }
+}
+
+function chooseSuggestion(place) {
+  const city = citySearchName(place);
+  cityInput.value = cityLabel(place);
+  localStorage.setItem("lastCity", city);
+  hideSuggestions();
+  window.showWeather(place);
+}
+
+function renderSuggestions(items) {
+  if (!citySuggestions) return;
+  citySuggestions.replaceChildren();
+  suggestionItems = items;
+  activeSuggestionIndex = -1;
+
+  if (!items.length) {
+    hideSuggestions();
+    return;
+  }
+
+  items.forEach((place, index) => {
+    const option = document.createElement("button");
+    option.id = `city-suggestion-${index}`;
+    option.className = "city-suggestion";
+    option.type = "button";
+    option.setAttribute("role", "option");
+
+    const name = document.createElement("strong");
+    name.textContent = place.name;
+    const detail = document.createElement("span");
+    detail.textContent = [place.admin1, place.country].filter(Boolean).join(", ") || "Weather location";
+
+    option.append(name, detail);
+    option.addEventListener("mousedown", (event) => event.preventDefault());
+    option.addEventListener("click", () => chooseSuggestion(place));
+    citySuggestions.append(option);
+  });
+
+  citySuggestions.hidden = false;
+}
+
+async function fetchCitySuggestions(query) {
+  const response = await fetch(
+    `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(query)}&count=6&language=en&format=json`
+  );
+  if (!response.ok) throw new Error("City suggestions failed");
+  const data = await response.json();
+  return data.results || [];
+}
+
+function queueCitySuggestions() {
+  const query = cityInput.value.trim();
+  clearTimeout(suggestionTimer);
+
+  if (query.length < 2) {
+    hideSuggestions();
+    return;
+  }
+
+  suggestionTimer = setTimeout(async () => {
+    try {
+      const items = await fetchCitySuggestions(query);
+      if (cityInput.value.trim() === query) renderSuggestions(items);
+    } catch (error) {
+      hideSuggestions();
+    }
+  }, 220);
+}
 
 const periodThemes = {
   day: {
@@ -546,13 +648,18 @@ function forecastSummary(data) {
 
 async function getWeather(city) {
   try {
-    const geoResponse = await fetch(
-      `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(city)}&count=1&language=en&format=json`
-    );
-    if (!geoResponse.ok) throw new Error("Location request failed");
+    let place = typeof city === "object" && city !== null ? city : null;
 
-    const geoData = await geoResponse.json();
-    const place = geoData.results && geoData.results[0];
+    if (!place) {
+      const geoResponse = await fetch(
+        `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(city)}&count=1&language=en&format=json`
+      );
+      if (!geoResponse.ok) throw new Error("Location request failed");
+
+      const geoData = await geoResponse.json();
+      place = geoData.results && geoData.results[0];
+    }
+
     if (!place) throw new Error("City not found");
 
     const weatherResponse = await fetch(
@@ -636,7 +743,7 @@ async function getWeather(city) {
 }
 
 async function showWeather(city) {
-  const searchCity = city.trim();
+  const searchCity = typeof city === "object" && city !== null ? citySearchName(city) : String(city).trim();
   if (!searchCity) return;
 
   setStatus("Loading weather...");
@@ -644,7 +751,7 @@ async function showWeather(city) {
 
   let data;
   try {
-    data = await window.getWeather(searchCity);
+    data = await window.getWeather(typeof city === "object" && city !== null ? city : searchCity);
   } catch (error) {
     data = undefined;
   }
@@ -699,6 +806,7 @@ window.showWeather = showWeather;
 weatherButton.addEventListener("click", () => {
   const city = cityInput.value.trim();
   if (!city) return;
+  hideSuggestions();
   localStorage.setItem("lastCity", city);
   window.showWeather(city);
 });
@@ -707,8 +815,40 @@ if (favoriteCityButton) {
   favoriteCityButton.addEventListener("click", toggleFavoriteCity);
 }
 
+cityInput.addEventListener("input", queueCitySuggestions);
+
+cityInput.addEventListener("focus", queueCitySuggestions);
+
+cityInput.addEventListener("blur", () => {
+  setTimeout(hideSuggestions, 120);
+});
+
 cityInput.addEventListener("keydown", (event) => {
-  if (event.key === "Enter") weatherButton.click();
+  if (event.key === "ArrowDown" && suggestionItems.length) {
+    event.preventDefault();
+    setActiveSuggestion(activeSuggestionIndex + 1);
+    return;
+  }
+
+  if (event.key === "ArrowUp" && suggestionItems.length) {
+    event.preventDefault();
+    setActiveSuggestion(activeSuggestionIndex - 1);
+    return;
+  }
+
+  if (event.key === "Escape") {
+    hideSuggestions();
+    return;
+  }
+
+  if (event.key === "Enter") {
+    if (activeSuggestionIndex >= 0 && suggestionItems[activeSuggestionIndex]) {
+      event.preventDefault();
+      chooseSuggestion(suggestionItems[activeSuggestionIndex]);
+      return;
+    }
+    weatherButton.click();
+  }
 });
 
 const lastCity = localStorage.getItem("lastCity") || "Jaipur";

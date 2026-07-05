@@ -30,8 +30,12 @@
               type="text"
               placeholder="Search city"
               aria-label="Search city"
+              autocomplete="off"
+              aria-autocomplete="list"
+              aria-controls="city-suggestions"
             />
             <button id="get-weather-btn" type="button">Search</button>
+            <div id="city-suggestions" class="city-suggestions" role="listbox" hidden></div>
           </div>
           <p id="status-message" class="status-message"></p>
         </div>
