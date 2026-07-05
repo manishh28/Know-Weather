@@ -90,11 +90,32 @@ const weatherCodes = {
 
 const conditionForCode = (code) => weatherCodes[code] || ["N/A", "N/A", "01d"];
 const toNightIcon = (iconCode) => (iconCode ? iconCode.replace(/d$/, "n") : iconCode);
+const localWeatherIcons = {
+  "01d": "clear-day.svg",
+  "01n": "clear-night.svg",
+  "02d": "partly-cloudy-day.svg",
+  "02n": "partly-cloudy-night.svg",
+  "03d": "cloudy.svg",
+  "03n": "cloudy.svg",
+  "04d": "cloudy.svg",
+  "04n": "cloudy.svg",
+  "09d": "rain.svg",
+  "09n": "rain.svg",
+  "10d": "rain.svg",
+  "10n": "rain.svg",
+  "11d": "thunderstorm.svg",
+  "11n": "thunderstorm.svg",
+  "13d": "snow.svg",
+  "13n": "snow.svg",
+  "50d": "fog.svg",
+  "50n": "fog.svg",
+};
 const iconUrl = (iconCode, night = false) => {
   const code = night ? toNightIcon(iconCode) : iconCode;
-  return `https://cdn.freecodecamp.org/weather-icons/${code}.png`;
+  const iconFile = localWeatherIcons[code] || localWeatherIcons["03d"];
+  return `assets/weather-icons/${iconFile}`;
 };
-const isNightIcon = (url) => /(?:^|\/)[0-9]{2}n\.png$/i.test(String(url || ""));
+const isNightIcon = (url) => /night|(?:^|\/)[0-9]{2}n\.(?:png|svg)$/i.test(String(url || ""));
 
 const setWeatherBackground = (weatherType, night = false) => {
   const weatherKey = String(weatherType || "")

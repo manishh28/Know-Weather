@@ -157,7 +157,7 @@ h1,
 
 .eyebrow {
   color: var(--muted);
-  font-size: 0.78rem;
+  font-size: 0.72rem;
   font-weight: 800;
   letter-spacing: 0;
   text-transform: uppercase;
@@ -165,7 +165,7 @@ h1,
 
 h1 {
   color: var(--ink);
-  font-size: 1.05rem;
+  font-size: 0.98rem;
   line-height: 1.1;
 }
 
@@ -229,7 +229,7 @@ button:disabled {
 .status-message {
   min-height: 18px;
   color: var(--muted);
-  font-size: 0.82rem;
+  font-size: 0.78rem;
   font-weight: 700;
   text-align: right;
 }
@@ -239,7 +239,7 @@ button:disabled {
 }
 
 .hero-weather {
-  min-height: 360px;
+  min-height: 320px;
   display: grid;
   justify-items: center;
   align-content: center;
@@ -252,7 +252,7 @@ button:disabled {
   max-width: min(100%, 560px);
   overflow-wrap: anywhere;
   color: #fff;
-  font-size: clamp(2.4rem, 9vw, 4rem);
+  font-size: clamp(2rem, 6vw, 3.2rem);
   font-weight: 400;
   line-height: 1.05;
   text-shadow: 0 8px 28px rgba(0, 0, 0, 0.28);
@@ -260,22 +260,22 @@ button:disabled {
 
 .hero-temperature {
   color: #fff;
-  font-size: clamp(7rem, 28vw, 12rem);
-  font-weight: 180;
-  line-height: 0.9;
+  font-size: clamp(5.6rem, 18vw, 9rem);
+  font-weight: 190;
+  line-height: 0.94;
   text-shadow: 0 10px 34px rgba(0, 0, 0, 0.22);
 }
 
 .weather-main {
   color: var(--muted);
-  font-size: clamp(1.5rem, 5vw, 2rem);
+  font-size: clamp(1.15rem, 3vw, 1.5rem);
   font-weight: 700;
 }
 
 .high-low {
   margin-top: 6px;
   color: #fff;
-  font-size: clamp(1.15rem, 4vw, 1.55rem);
+  font-size: clamp(0.98rem, 2.4vw, 1.22rem);
   font-weight: 760;
 }
 
@@ -301,7 +301,7 @@ button:disabled {
 .forecast-insight {
   padding: 0 18px;
   color: #fff;
-  font-size: clamp(1rem, 3vw, 1.3rem);
+  font-size: clamp(0.95rem, 2.1vw, 1.08rem);
   line-height: 1.42;
 }
 
@@ -319,8 +319,8 @@ button:disabled {
 }
 
 .hour-card {
-  width: 76px;
-  flex: 0 0 76px;
+  width: 72px;
+  flex: 0 0 72px;
   display: grid;
   justify-items: center;
   gap: 8px;
@@ -329,7 +329,7 @@ button:disabled {
 }
 
 .hour-card strong {
-  font-size: 1rem;
+  font-size: 0.94rem;
   line-height: 1.1;
 }
 
@@ -344,13 +344,13 @@ button:disabled {
 .precip {
   min-height: 16px;
   color: #63e6ff;
-  font-size: 0.82rem;
+  font-size: 0.76rem;
   font-weight: 800;
   line-height: 1;
 }
 
 .hour-temp {
-  font-size: 1.24rem;
+  font-size: 1.08rem;
   font-weight: 780;
 }
 
@@ -375,12 +375,12 @@ button:disabled {
   height: 22px;
   border: 1px solid var(--line);
   border-radius: 6px;
-  font-size: 0.8rem;
+  font-size: 0.74rem;
   font-weight: 900;
 }
 
 .panel-title h2 {
-  font-size: 0.92rem;
+  font-size: 0.84rem;
   letter-spacing: 0;
 }
 
@@ -389,7 +389,7 @@ button:disabled {
 }
 
 .daily-row {
-  min-height: 74px;
+  min-height: 68px;
   display: grid;
   grid-template-columns: minmax(74px, 0.78fr) 70px 48px minmax(92px, 1.5fr) 48px;
   align-items: center;
@@ -405,7 +405,7 @@ button:disabled {
 .daily-day,
 .daily-max,
 .daily-min {
-  font-size: clamp(1.12rem, 4vw, 1.5rem);
+  font-size: clamp(1rem, 2.6vw, 1.22rem);
 }
 
 .daily-day,
@@ -457,7 +457,7 @@ button:disabled {
   display: block;
   margin-bottom: 8px;
   color: var(--muted);
-  font-size: 0.78rem;
+  font-size: 0.72rem;
   font-weight: 800;
   text-transform: uppercase;
 }
@@ -466,7 +466,7 @@ button:disabled {
   display: block;
   overflow-wrap: anywhere;
   color: #fff;
-  font-size: clamp(1.05rem, 3vw, 1.35rem);
+  font-size: clamp(0.98rem, 2.2vw, 1.14rem);
 }
 
 @media (min-width: 860px) {
@@ -479,7 +479,7 @@ button:disabled {
   }
 
   .hero-weather {
-    min-height: 390px;
+    min-height: 340px;
   }
 }
 
@@ -505,7 +505,7 @@ button:disabled {
   }
 
   .hero-weather {
-    min-height: 340px;
+    min-height: 315px;
   }
 
   .metric-grid {
@@ -538,7 +538,7 @@ button:disabled {
   }
 
   .hero-weather {
-    min-height: 350px;
+    min-height: 310px;
   }
 
   .daily-panel {
