@@ -14,6 +14,7 @@ const forecastInsight = document.getElementById("forecast-insight");
 const hourlyForecast = document.getElementById("hourly-forecast");
 const dailyForecast = document.getElementById("daily-forecast");
 const DAILY_FORECAST_DAYS = 7;
+const HOURLY_FORECAST_HOURS = 24;
 
 const valueOrNA = (value) => (value === undefined || value === null ? "N/A" : value);
 const isNumber = (value) => Number.isFinite(Number(value));
@@ -200,7 +201,7 @@ function buildHourlyForecast(hourly, daily, currentTime) {
   let startIndex = times.findIndex((time) => time >= currentTime);
   if (startIndex < 0) startIndex = 0;
 
-  return times.slice(startIndex, startIndex + 8).map((time, offset) => {
+  return times.slice(startIndex, startIndex + HOURLY_FORECAST_HOURS).map((time, offset) => {
     const index = startIndex + offset;
     const condition = conditionForCode(hourly.weather_code && hourly.weather_code[index]);
     const night = isNightAtTime(time, daily);
@@ -353,7 +354,7 @@ function forecastSummary(data) {
   const todayHigh = roundTemp(today.max);
   const tomorrowHigh = roundTemp(tomorrow.max);
   const tempChange = tomorrowHigh - todayHigh;
-  const nextHours = hourlyItems.slice(0, 8);
+  const nextHours = hourlyItems.slice(0, HOURLY_FORECAST_HOURS);
   const maxNextRain = maxValue(nextHours, "precipitation");
   const maxWeekRain = maxValue(dailyItems, "precipitation");
   const hottestDay = dailyItems.reduce((hottest, day) => {

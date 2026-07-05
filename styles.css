@@ -294,7 +294,7 @@ button:disabled {
 
 .hourly-panel {
   display: grid;
-  gap: 14px;
+  gap: 12px;
   padding: 16px 0 18px;
 }
 
@@ -307,11 +307,14 @@ button:disabled {
 
 .hourly-forecast {
   display: flex;
-  gap: 12px;
+  gap: 10px;
   overflow-x: auto;
-  padding: 14px 18px 2px;
+  padding: 12px 18px 3px;
   border-top: 1px solid var(--line);
+  scroll-padding-inline: 18px;
+  scroll-snap-type: x proximity;
   scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
 }
 
 .hourly-forecast::-webkit-scrollbar {
@@ -319,17 +322,18 @@ button:disabled {
 }
 
 .hour-card {
-  width: 72px;
-  flex: 0 0 72px;
+  width: 66px;
+  flex: 0 0 66px;
   display: grid;
   justify-items: center;
-  gap: 8px;
+  gap: 7px;
   color: #fff;
   text-align: center;
+  scroll-snap-align: start;
 }
 
 .hour-card strong {
-  font-size: 0.94rem;
+  font-size: 0.88rem;
   line-height: 1.1;
 }
 
@@ -350,7 +354,7 @@ button:disabled {
 }
 
 .hour-temp {
-  font-size: 1.08rem;
+  font-size: 1rem;
   font-weight: 780;
 }
 
@@ -366,6 +370,11 @@ button:disabled {
   border-bottom: 1px solid var(--line);
   color: var(--subtle);
   text-transform: uppercase;
+}
+
+.hourly-title {
+  padding: 0 18px;
+  border-bottom: 0;
 }
 
 .panel-title span {
