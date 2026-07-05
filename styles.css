@@ -279,6 +279,24 @@ button:disabled {
   font-weight: 760;
 }
 
+.favorite-city-btn {
+  width: auto;
+  min-height: 40px;
+  margin-top: 18px;
+  padding: 0 18px;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  border-radius: 999px;
+  background: rgba(12, 18, 34, 0.28);
+  color: #fff;
+  box-shadow: none;
+  backdrop-filter: blur(16px);
+}
+
+.favorite-city-btn.saved {
+  background: rgba(111, 224, 211, 0.28);
+  color: #fff;
+}
+
 .forecast-panel,
 .metric-grid > div {
   border: 1px solid var(--line);
@@ -360,6 +378,62 @@ button:disabled {
 
 .daily-panel {
   padding: 16px 18px;
+}
+
+.favorites-panel,
+.alerts-panel {
+  display: grid;
+  gap: 14px;
+  padding: 16px 18px;
+}
+
+.favorite-cities,
+.weather-alerts {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+.favorite-cities::-webkit-scrollbar,
+.weather-alerts::-webkit-scrollbar {
+  display: none;
+}
+
+.favorite-chip {
+  width: auto;
+  min-height: 38px;
+  flex: 0 0 auto;
+  padding: 0 16px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.13);
+  color: #fff;
+  box-shadow: none;
+}
+
+.alert-card {
+  min-width: 210px;
+  flex: 0 0 210px;
+  display: grid;
+  gap: 6px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.alert-card strong {
+  color: #fff;
+  font-size: 0.92rem;
+}
+
+.alert-card span,
+.empty-state {
+  color: var(--muted);
+  font-size: 0.86rem;
+  line-height: 1.35;
 }
 
 .panel-title {
@@ -455,6 +529,10 @@ button:disabled {
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 12px;
   padding-bottom: 10px;
+}
+
+.air-quality-grid {
+  padding-bottom: 20px;
 }
 
 .metric-grid > div {

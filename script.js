@@ -10,11 +10,20 @@ const windGust = document.getElementById("wind-gust");
 const weatherMain = document.getElementById("weather-main");
 const locationName = document.getElementById("location");
 const highLow = document.getElementById("high-low");
+const favoriteCityButton = document.getElementById("favorite-city-btn");
+const favoriteCities = document.getElementById("favorite-cities");
+const weatherAlerts = document.getElementById("weather-alerts");
+const airAqi = document.getElementById("air-aqi");
+const airPm25 = document.getElementById("air-pm25");
+const airPm10 = document.getElementById("air-pm10");
+const airUv = document.getElementById("air-uv");
 const forecastInsight = document.getElementById("forecast-insight");
 const hourlyForecast = document.getElementById("hourly-forecast");
 const dailyForecast = document.getElementById("daily-forecast");
 const DAILY_FORECAST_DAYS = 7;
 const HOURLY_FORECAST_HOURS = 24;
+const FAVORITES_KEY = "favoriteCities";
+let activePlace = null;
 
 const valueOrNA = (value) => (value === undefined || value === null ? "N/A" : value);
 const isNumber = (value) => Number.isFinite(Number(value));
@@ -29,6 +38,7 @@ const formatDecimal = (value, digits = 1) => {
 };
 const formatPercent = (value) => (isNumber(value) ? `${Math.round(Number(value))}%` : "N/A");
 const formatUnit = (value, unit) => (isNumber(value) ? `${formatDecimal(value)} ${unit}` : "N/A");
+const formatMicrograms = (value) => (isNumber(value) ? `${formatDecimal(value)} ug/m3` : "N/A");
 
 const setStatus = (message, isError = false) => {
   statusMessage.textContent = message;
@@ -333,6 +343,139 @@ function renderDaily(items) {
   });
 }
 
+function getFavorites() {
+  try {
+    const parsed = JSON.parse(localStorage.getItem(FAVORITES_KEY) || "[]");
+    return Array.isArray(parsed) ? parsed : [];
+  } catch (error) {
+    return [];
+  }
+}
+
+function saveFavorites(items) {
+  localStorage.setItem(FAVORITES_KEY, JSON.stringify(items.slice(0, 8)));
+}
+
+function isFavoriteCity(place) {
+  if (!place) return false;
+  const favorites = getFavorites();
+  return favorites.some((item) => String(item.name).toLowerCase() === String(place.name).toLowerCase());
+}
+
+function updateFavoriteButton() {
+  if (!favoriteCityButton || !activePlace) return;
+  favoriteCityButton.hidden = false;
+  favoriteCityButton.textContent = isFavoriteCity(activePlace) ? "Saved city" : "Save city";
+  favoriteCityButton.classList.toggle("saved", isFavoriteCity(activePlace));
+}
+
+function renderFavorites() {
+  if (!favoriteCities) return;
+  favoriteCities.replaceChildren();
+  const favorites = getFavorites();
+
+  if (!favorites.length) {
+    const empty = document.createElement("p");
+    empty.className = "empty-state";
+    empty.textContent = "Save cities to open them faster.";
+    favoriteCities.append(empty);
+    return;
+  }
+
+  favorites.forEach((favorite) => {
+    const button = document.createElement("button");
+    button.className = "favorite-chip";
+    button.type = "button";
+    button.textContent = favorite.name;
+    button.addEventListener("click", () => {
+      cityInput.value = favorite.name;
+      localStorage.setItem("lastCity", favorite.name);
+      window.showWeather(favorite.name);
+    });
+    favoriteCities.append(button);
+  });
+}
+
+function toggleFavoriteCity() {
+  if (!activePlace) return;
+  const favorites = getFavorites();
+  const exists = isFavoriteCity(activePlace);
+  const nextFavorites = exists
+    ? favorites.filter((item) => String(item.name).toLowerCase() !== String(activePlace.name).toLowerCase())
+    : [{ ...activePlace, savedAt: new Date().toISOString() }, ...favorites];
+
+  saveFavorites(nextFavorites);
+  renderFavorites();
+  updateFavoriteButton();
+}
+
+function aqiLabel(value) {
+  const aqi = Number(value);
+  if (!Number.isFinite(aqi)) return "N/A";
+  if (aqi <= 50) return `${Math.round(aqi)} Good`;
+  if (aqi <= 100) return `${Math.round(aqi)} Moderate`;
+  if (aqi <= 150) return `${Math.round(aqi)} Unhealthy SG`;
+  if (aqi <= 200) return `${Math.round(aqi)} Unhealthy`;
+  if (aqi <= 300) return `${Math.round(aqi)} Very unhealthy`;
+  return `${Math.round(aqi)} Hazardous`;
+}
+
+function renderAirQuality(airQuality) {
+  const current = (airQuality && airQuality.current) || {};
+  airAqi.textContent = aqiLabel(current.us_aqi);
+  airPm25.textContent = formatMicrograms(current.pm2_5);
+  airPm10.textContent = formatMicrograms(current.pm10);
+  airUv.textContent = isNumber(current.uv_index) ? formatDecimal(current.uv_index) : "N/A";
+}
+
+function buildAlerts(data) {
+  const alerts = [];
+  const hourlyItems = data.hourly || [];
+  const dailyItems = data.daily || [];
+  const maxRain = maxValue(hourlyItems.slice(0, 24), "precipitation");
+  const maxDailyRain = maxValue(dailyItems, "precipitation");
+  const maxHigh = maxValue(dailyItems, "max");
+  const windGustValue = Number(data.wind && data.wind.gust);
+  const aqi = Number(data.airQuality && data.airQuality.current && data.airQuality.current.us_aqi);
+  const uv = Number(data.airQuality && data.airQuality.current && data.airQuality.current.uv_index);
+  const stormLikely = hasWeather(hourlyItems.slice(0, 24), ["Thunderstorm"]);
+
+  if (stormLikely) alerts.push({ title: "Thunderstorm", text: "Thunderstorms may affect your area in the next 24 hours." });
+  if (maxRain !== null && maxRain >= 70) alerts.push({ title: "Rain", text: `High rain chance nearby, peaking around ${Math.round(maxRain)}%.` });
+  if (maxDailyRain !== null && maxDailyRain >= 70) alerts.push({ title: "Wet week", text: `One of the next 7 days reaches about ${Math.round(maxDailyRain)}% rain chance.` });
+  if (maxHigh !== null && maxHigh >= 40) alerts.push({ title: "Extreme heat", text: `High temperature may reach ${Math.round(maxHigh)} degrees this week.` });
+  if (Number.isFinite(windGustValue) && windGustValue >= 14) alerts.push({ title: "Wind gusts", text: `Gusts are near ${formatUnit(windGustValue, "m/s")}.` });
+  if (Number.isFinite(aqi) && aqi > 100) alerts.push({ title: "Air quality", text: `AQI is ${Math.round(aqi)}, so sensitive people should reduce outdoor exposure.` });
+  if (Number.isFinite(uv) && uv >= 8) alerts.push({ title: "UV index", text: `UV index is ${formatDecimal(uv)}, so sun protection matters.` });
+
+  return alerts.slice(0, 4);
+}
+
+function renderAlerts(data) {
+  if (!weatherAlerts) return;
+  weatherAlerts.replaceChildren();
+  const alerts = buildAlerts(data);
+
+  if (!alerts.length) {
+    const calm = document.createElement("p");
+    calm.className = "empty-state";
+    calm.textContent = "No major weather alerts right now.";
+    weatherAlerts.append(calm);
+    return;
+  }
+
+  alerts.forEach((alert) => {
+    const card = document.createElement("article");
+    card.className = "alert-card";
+    const title = document.createElement("strong");
+    title.textContent = alert.title;
+    const text = document.createElement("span");
+    text.textContent = alert.text;
+    card.append(title, text);
+    weatherAlerts.append(card);
+  });
+}
+
 function hasWeather(items, types) {
   return items.some((item) => types.includes(item.main));
 }
@@ -426,6 +569,21 @@ async function getWeather(city) {
     if (!weatherResponse.ok) throw new Error("Weather request failed");
 
     const weatherData = await weatherResponse.json();
+    let airQuality = {};
+    try {
+      const airResponse = await fetch(
+        `https://air-quality-api.open-meteo.com/v1/air-quality` +
+          `?latitude=${place.latitude}&longitude=${place.longitude}` +
+          `&current=us_aqi,pm2_5,pm10,uv_index` +
+          `&timezone=auto`
+      );
+      if (airResponse.ok) {
+        airQuality = await airResponse.json();
+      }
+    } catch (error) {
+      airQuality = {};
+    }
+
     const current = weatherData.current || {};
     const daily = weatherData.daily || {};
     const hourly = weatherData.hourly || {};
@@ -462,8 +620,15 @@ async function getWeather(city) {
       sun: { ...sunCycle, isNight: night },
       hourly: hourlyItems,
       daily: dailyItems,
+      airQuality,
       isNight: night,
       name: place.name,
+      place: {
+        name: place.name,
+        country: place.country || "",
+        latitude: place.latitude,
+        longitude: place.longitude,
+      },
     };
   } catch (error) {
     console.log(error);
@@ -492,6 +657,7 @@ async function showWeather(city) {
 
   const weather = data.weather && data.weather[0] ? data.weather[0] : {};
   const night = Boolean(data.isNight || (data.sun && data.sun.isNight) || isNightIcon(weather.icon));
+  activePlace = data.place || { name: data.name };
 
   if (weatherIcon) {
     if (weather.icon) {
@@ -514,6 +680,9 @@ async function showWeather(city) {
   forecastInsight.textContent = forecastSummary(data);
   renderHourly(data.hourly || []);
   renderDaily(data.daily || []);
+  renderAirQuality(data.airQuality || {});
+  renderAlerts(data);
+  updateFavoriteButton();
 
   if (data.sun && window.setSunTimes) {
     window.setSunTimes({ ...data.sun, isNight: night });
@@ -534,10 +703,15 @@ weatherButton.addEventListener("click", () => {
   window.showWeather(city);
 });
 
+if (favoriteCityButton) {
+  favoriteCityButton.addEventListener("click", toggleFavoriteCity);
+}
+
 cityInput.addEventListener("keydown", (event) => {
   if (event.key === "Enter") weatherButton.click();
 });
 
 const lastCity = localStorage.getItem("lastCity") || "Jaipur";
 cityInput.value = lastCity;
+renderFavorites();
 window.showWeather(lastCity);

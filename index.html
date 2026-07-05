@@ -42,6 +42,25 @@
         <p id="main-temperature" class="hero-temperature">--&deg;</p>
         <p id="weather-main" class="weather-main">N/A</p>
         <p id="high-low" class="high-low">H:--&deg; L:--&deg;</p>
+        <button id="favorite-city-btn" class="favorite-city-btn" type="button" hidden>
+          Save city
+        </button>
+      </section>
+
+      <section class="forecast-panel favorites-panel" aria-label="Favorite cities">
+        <div class="panel-title">
+          <span aria-hidden="true">F</span>
+          <h2>Favorite Cities</h2>
+        </div>
+        <div id="favorite-cities" class="favorite-cities"></div>
+      </section>
+
+      <section class="forecast-panel alerts-panel" aria-label="Weather alerts">
+        <div class="panel-title">
+          <span aria-hidden="true">!</span>
+          <h2>Weather Alerts</h2>
+        </div>
+        <div id="weather-alerts" class="weather-alerts"></div>
       </section>
 
       <section class="forecast-panel hourly-panel" aria-label="Hourly forecast">
@@ -79,6 +98,25 @@
         <div>
           <span class="label">Wind gust</span>
           <strong id="wind-gust">N/A</strong>
+        </div>
+      </section>
+
+      <section class="metric-grid air-quality-grid" aria-label="Air quality details">
+        <div>
+          <span class="label">US AQI</span>
+          <strong id="air-aqi">N/A</strong>
+        </div>
+        <div>
+          <span class="label">PM2.5</span>
+          <strong id="air-pm25">N/A</strong>
+        </div>
+        <div>
+          <span class="label">PM10</span>
+          <strong id="air-pm10">N/A</strong>
+        </div>
+        <div>
+          <span class="label">UV Index</span>
+          <strong id="air-uv">N/A</strong>
         </div>
       </section>
     </main>
