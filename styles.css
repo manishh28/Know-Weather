@@ -113,7 +113,7 @@ body[data-period="day"]::after {
 
 .search-panel {
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-start;
   align-items: center;
   gap: 14px;
   border: 1px solid var(--line);
@@ -170,7 +170,12 @@ h1 {
 }
 
 .search-actions {
-  min-width: min(100%, 330px);
+  position: fixed;
+  top: 24px;
+  right: 24px;
+  z-index: 30;
+  width: min(420px, calc(100vw - 48px));
+  min-width: 0;
   display: grid;
   gap: 6px;
   justify-items: end;
@@ -233,8 +238,10 @@ button:disabled {
   top: calc(100% + 8px);
   left: 0;
   right: 0;
+  max-height: min(360px, calc(100vh - 104px));
   display: grid;
-  overflow: hidden;
+  overflow-y: auto;
+  overflow-x: hidden;
   border: 1px solid var(--line);
   border-radius: 12px;
   background: rgba(13, 18, 32, 0.94);
@@ -640,6 +647,7 @@ button:disabled {
   }
 
   .search-actions {
+    position: static;
     width: 100%;
     min-width: 0;
   }
@@ -660,12 +668,12 @@ button:disabled {
   }
 
   .search-panel {
-    flex-direction: row;
+    flex-direction: column;
     padding: 10px;
   }
 
   .brand-lockup {
-    display: none;
+    display: flex;
   }
 
   .controls {
