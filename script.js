@@ -594,7 +594,7 @@ async function renderRadarMap(place) {
     if (!frame || !data.host) throw new Error("No radar frame available");
     if (requestId !== radarRequestId) return;
 
-    const zoom = 8;
+    const zoom = 6;
     const point = tilePoint(place.latitude, place.longitude, zoom);
     const startX = Math.floor(point.x) - 1;
     const startY = Math.floor(point.y) - 1;
@@ -603,7 +603,7 @@ async function renderRadarMap(place) {
     const offsetX = 384 - centerX;
     const offsetY = 384 - centerY;
     const layer = document.createElement("div");
-    const credit = document.createElement("span");
+    const credit = document.createElement("a");
     const marker = document.createElement("span");
 
     layer.className = "radar-tile-layer";
@@ -622,7 +622,10 @@ async function renderRadarMap(place) {
 
     marker.className = "radar-city-marker";
     credit.className = "radar-credit";
-    credit.textContent = "Radar: RainViewer | Map: OpenStreetMap";
+    credit.href = `https://www.rainviewer.com/map.html?loc=${place.latitude},${place.longitude},${zoom}`;
+    credit.target = "_blank";
+    credit.rel = "noopener";
+    credit.textContent = "Open radar map";
 
     radarMap.replaceChildren(layer, marker, credit);
   } catch (error) {

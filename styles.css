@@ -429,6 +429,7 @@ button:disabled {
   overflow: hidden;
   border-radius: 16px;
   background: rgba(9, 14, 25, 0.42);
+  cursor: default;
   isolation: isolate;
 }
 
@@ -489,6 +490,14 @@ button:disabled {
   color: rgba(255, 255, 255, 0.76);
   font-size: 0.72rem;
   font-weight: 700;
+}
+
+.radar-credit {
+  text-decoration: none;
+}
+
+.radar-credit:hover {
+  color: #fff;
 }
 
 .radar-status {
