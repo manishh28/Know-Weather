@@ -47,20 +47,20 @@
         border-radius: 50%;
       }
       #weather-sun {
-        width: 126px;
-        height: 126px;
+        width: clamp(170px, 11vw, 240px);
+        height: clamp(170px, 11vw, 240px);
         opacity: 0;
         background:
-          radial-gradient(circle, rgba(255,244,184,0.34) 0 26%, rgba(255,198,73,0.15) 48%, transparent 73%),
+          radial-gradient(circle, rgba(255,244,184,0.42) 0 24%, rgba(255,198,73,0.2) 47%, transparent 72%),
           url("assets/sky/sun.png") center/contain no-repeat;
-        filter: drop-shadow(0 0 22px rgba(255,221,112,0.58)) drop-shadow(0 0 58px rgba(255,195,58,0.36));
+        filter: drop-shadow(0 0 28px rgba(255,221,112,0.66)) drop-shadow(0 0 84px rgba(255,195,58,0.42));
       }
       #weather-moon {
-        width: 112px;
-        height: 112px;
+        width: clamp(145px, 9vw, 205px);
+        height: clamp(145px, 9vw, 205px);
         opacity: 0;
         background: url("assets/sky/moon.png") center/contain no-repeat;
-        filter: drop-shadow(0 0 18px rgba(230,236,252,0.5)) drop-shadow(0 0 58px rgba(155,174,215,0.26));
+        filter: drop-shadow(0 0 24px rgba(230,236,252,0.58)) drop-shadow(0 0 78px rgba(155,174,215,0.32));
       }
       #weather-moon::before {
         content: "";
@@ -76,14 +76,14 @@
       }
       @keyframes weather-sun-arc {
         0%   { left: -12%; top: 60%; opacity: 0; }
-        8%   { opacity: 0.65; }
+        8%   { opacity: 0.82; }
         50%  { left: 50%;  top: 6%; }
-        92%  { opacity: 0.65; }
+        92%  { opacity: 0.82; }
         100% { left: 112%; top: 60%; opacity: 0; }
       }
       @media (max-width: 680px) {
-        #weather-sun  { width: 82px; height: 82px; }
-        #weather-moon { width: 88px; height: 88px; }
+        #weather-sun  { width: 118px; height: 118px; }
+        #weather-moon { width: 108px; height: 108px; }
       }
     `;
     document.head.appendChild(style);
@@ -101,7 +101,7 @@
       sunEl.classList.remove("decorative");
       sunEl.style.opacity = "0";
       positionAlongArc(moonEl, 0.72);
-      moonEl.style.opacity = "0.75";
+      moonEl.style.opacity = "0.92";
       return;
     }
 
@@ -187,7 +187,7 @@
       const percent = (now - sunriseToday) / dayLength;
       setPeriod(false);
       positionAlongArc(sunEl, percent);
-      sunEl.style.opacity = "0.65";
+      sunEl.style.opacity = "0.82";
       moonEl.style.opacity = "0";
       return;
     }
@@ -199,14 +199,14 @@
     setPeriod(true);
     if (!nightStart || !nightEnd || nightLength <= 0) {
       positionAlongArc(moonEl, 0.72);
-      moonEl.style.opacity = "0.75";
+      moonEl.style.opacity = "0.92";
       sunEl.style.opacity = "0";
       return;
     }
 
     const percent = Math.max(0, Math.min(1, (now - nightStart) / nightLength));
     positionAlongArc(moonEl, percent);
-    moonEl.style.opacity = "0.75";
+    moonEl.style.opacity = "0.92";
     sunEl.style.opacity = "0";
   }
 
