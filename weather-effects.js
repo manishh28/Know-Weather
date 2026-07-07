@@ -52,10 +52,25 @@
         height: 86px;
         opacity: 0;
         background:
-          radial-gradient(circle at 38% 35%, rgba(255,255,255,0) 0 8px, rgba(160,170,190,0.35) 9px 14px, transparent 15px),
-          radial-gradient(circle at 65% 60%, rgba(255,255,255,0) 0 5px, rgba(160,170,190,0.35) 6px 9px, transparent 10px),
-          radial-gradient(circle, #f4f6fb 0%, #d9e0ee 55%, rgba(217,224,238,0) 75%);
-        box-shadow: 0 0 45px 18px rgba(214, 222, 240, 0.35);
+          radial-gradient(circle at 35% 34%, rgba(112,121,146,0.34) 0 6px, rgba(221,226,238,0.18) 7px 13px, transparent 14px),
+          radial-gradient(circle at 63% 57%, rgba(104,113,139,0.32) 0 4px, rgba(220,225,238,0.18) 5px 9px, transparent 10px),
+          radial-gradient(circle at 69% 31%, rgba(120,130,154,0.26) 0 3px, transparent 8px),
+          radial-gradient(circle at 47% 69%, rgba(96,105,130,0.24) 0 5px, transparent 12px),
+          radial-gradient(circle at 40% 38%, #ffffff 0%, #e7ebf4 34%, #b9c1d2 65%, rgba(116,124,148,0.15) 100%);
+        box-shadow:
+          inset -14px -10px 18px rgba(75,82,106,0.28),
+          inset 9px 8px 16px rgba(255,255,255,0.34),
+          0 0 26px 8px rgba(230,236,252,0.38),
+          0 0 80px 28px rgba(155,174,215,0.2);
+      }
+      #weather-moon::before {
+        content: "";
+        position: absolute;
+        inset: -20%;
+        border-radius: inherit;
+        background: radial-gradient(circle, rgba(230,236,252,0.3) 0 24%, rgba(230,236,252,0.08) 45%, transparent 68%);
+        filter: blur(8px);
+        z-index: -1;
       }
       #weather-sun.decorative {
         animation: weather-sun-arc 70s linear infinite;
@@ -229,12 +244,20 @@
     } else if (effect === "clouds" || effect === "fog") {
       const count = effect === "fog" ? 8 : 5;
       for (let i = 0; i < count; i++) {
+        const size = 90 + Math.random() * 150;
         particles.push({
           x: Math.random() * w,
           y: effect === "fog" ? Math.random() * h : Math.random() * h * 0.4,
-          size: 90 + Math.random() * 150,
+          size,
           speed: 0.12 + Math.random() * 0.25,
           opacity: effect === "fog" ? 0.05 + Math.random() * 0.07 : 0.07 + Math.random() * 0.1,
+          lobes: [
+            { x: -0.7, y: 0.05, rx: 0.58, ry: 0.28 },
+            { x: -0.32, y: -0.12, rx: 0.55, ry: 0.33 },
+            { x: 0.12, y: -0.18, rx: 0.72, ry: 0.39 },
+            { x: 0.58, y: 0.02, rx: 0.62, ry: 0.31 },
+            { x: 0.02, y: 0.15, rx: 1.05, ry: 0.28 },
+          ],
         });
       }
     }
@@ -290,12 +313,48 @@
       });
     } else if (currentEffect === "clouds" || currentEffect === "fog") {
       particles.forEach((p) => {
+        const cloudGradient = ctx.createRadialGradient(
+          p.x - p.size * 0.2,
+          p.y - p.size * 0.15,
+          p.size * 0.08,
+          p.x,
+          p.y,
+          p.size * 1.25
+        );
+        const light = isNight ? 185 : 255;
+        const mid = isNight ? 130 : 226;
+        cloudGradient.addColorStop(0, `rgba(${light},${light + 4},${light + 16},${p.opacity * 1.25})`);
+        cloudGradient.addColorStop(0.46, `rgba(${mid},${mid + 8},${mid + 24},${p.opacity})`);
+        cloudGradient.addColorStop(1, `rgba(${mid},${mid + 8},${mid + 24},0)`);
+
+        ctx.save();
+        ctx.filter = currentEffect === "fog" ? "blur(14px)" : "blur(7px)";
+        ctx.fillStyle = cloudGradient;
+        p.lobes.forEach((lobe) => {
+          ctx.beginPath();
+          ctx.ellipse(
+            p.x + lobe.x * p.size,
+            p.y + lobe.y * p.size,
+            lobe.rx * p.size,
+            lobe.ry * p.size,
+            0,
+            0,
+            Math.PI * 2
+          );
+          ctx.fill();
+        });
+        ctx.restore();
+
+        ctx.save();
+        ctx.filter = "blur(20px)";
+        ctx.fillStyle = `rgba(14,18,34,${isNight ? p.opacity * 0.7 : p.opacity * 0.18})`;
         ctx.beginPath();
-        ctx.fillStyle = `rgba(255,255,255,${p.opacity})`;
-        ctx.ellipse(p.x, p.y, p.size, p.size * 0.55, 0, 0, Math.PI * 2);
+        ctx.ellipse(p.x + p.size * 0.15, p.y + p.size * 0.2, p.size * 0.95, p.size * 0.22, 0, 0, Math.PI * 2);
         ctx.fill();
+        ctx.restore();
+
         p.x += p.speed;
-        if (p.x > w + p.size) p.x = -p.size;
+        if (p.x > w + p.size * 1.5) p.x = -p.size * 1.5;
       });
     }
 
