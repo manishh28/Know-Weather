@@ -47,27 +47,20 @@
         border-radius: 50%;
       }
       #weather-sun {
-        width: 90px;
-        height: 90px;
-        opacity: 0;
-        background: radial-gradient(circle, #fff8d6 0%, #ffd166 45%, rgba(255,209,102,0) 72%);
-        box-shadow: 0 0 70px 35px rgba(255, 209, 102, 0.4);
-      }
-      #weather-moon {
-        width: 86px;
-        height: 86px;
+        width: 88px;
+        height: 88px;
         opacity: 0;
         background:
-          radial-gradient(circle at 35% 34%, rgba(112,121,146,0.34) 0 6px, rgba(221,226,238,0.18) 7px 13px, transparent 14px),
-          radial-gradient(circle at 63% 57%, rgba(104,113,139,0.32) 0 4px, rgba(220,225,238,0.18) 5px 9px, transparent 10px),
-          radial-gradient(circle at 69% 31%, rgba(120,130,154,0.26) 0 3px, transparent 8px),
-          radial-gradient(circle at 47% 69%, rgba(96,105,130,0.24) 0 5px, transparent 12px),
-          radial-gradient(circle at 40% 38%, #ffffff 0%, #e7ebf4 34%, #b9c1d2 65%, rgba(116,124,148,0.15) 100%);
-        box-shadow:
-          inset -14px -10px 18px rgba(75,82,106,0.28),
-          inset 9px 8px 16px rgba(255,255,255,0.34),
-          0 0 26px 8px rgba(230,236,252,0.38),
-          0 0 80px 28px rgba(155,174,215,0.2);
+          radial-gradient(circle, rgba(255,244,184,0.34) 0 26%, rgba(255,198,73,0.15) 48%, transparent 73%),
+          url("assets/sky/sun.png") center/contain no-repeat;
+        filter: drop-shadow(0 0 18px rgba(255,221,112,0.55)) drop-shadow(0 0 46px rgba(255,195,58,0.32));
+      }
+      #weather-moon {
+        width: 94px;
+        height: 94px;
+        opacity: 0;
+        background: url("assets/sky/moon.png") center/contain no-repeat;
+        filter: drop-shadow(0 0 16px rgba(230,236,252,0.48)) drop-shadow(0 0 50px rgba(155,174,215,0.24));
       }
       #weather-moon::before {
         content: "";
@@ -89,8 +82,8 @@
         100% { left: 112%; top: 60%; opacity: 0; }
       }
       @media (max-width: 680px) {
-        #weather-sun  { width: 60px; height: 60px; box-shadow: 0 0 50px 24px rgba(255,209,102,0.35); }
-        #weather-moon { width: 68px; height: 68px; box-shadow: 0 0 35px 14px rgba(214,222,240,0.3); }
+        #weather-sun  { width: 62px; height: 62px; }
+        #weather-moon { width: 72px; height: 72px; }
       }
     `;
     document.head.appendChild(style);
@@ -226,14 +219,16 @@
     if (effect === "rain" || effect === "drizzle" || effect === "thunderstorm") {
       const count = effect === "thunderstorm" ? 200 : effect === "rain" ? 140 : 80;
       for (let i = 0; i < count; i++) {
+        const depth = 0.72 + Math.random() * 0.65;
         particles.push({
           x: Math.random() * w,
           y: Math.random() * h,
-          len: 14 + Math.random() * 22,
-          speed: 10 + Math.random() * 10,
-          wind: 2 + Math.random() * 1.5,
-          opacity: 0.15 + Math.random() * 0.35,
-          width: Math.random() < 0.3 ? 2 : 1,
+          len: (12 + Math.random() * 26) * depth,
+          speed: (9 + Math.random() * 12) * depth,
+          wind: (1.8 + Math.random() * 1.8) * depth,
+          opacity: (0.12 + Math.random() * 0.36) * depth,
+          width: Math.random() < 0.28 ? 1.8 : 1,
+          depth,
         });
       }
     } else if (effect === "snow") {
@@ -280,26 +275,45 @@
     ctx.clearRect(0, 0, w, h);
 
     if (currentEffect === "rain" || currentEffect === "drizzle" || currentEffect === "thunderstorm") {
+      const mist = ctx.createLinearGradient(0, h * 0.42, 0, h);
+      const mistOpacity = currentEffect === "drizzle" ? 0.035 : currentEffect === "rain" ? 0.055 : 0.08;
+      mist.addColorStop(0, "rgba(190,215,245,0)");
+      mist.addColorStop(0.72, `rgba(180,205,238,${mistOpacity})`);
+      mist.addColorStop(1, `rgba(210,225,248,${mistOpacity * 0.55})`);
+      ctx.fillStyle = mist;
+      ctx.fillRect(0, 0, w, h);
+
+      ctx.save();
+      ctx.globalCompositeOperation = "screen";
       particles.forEach((p) => {
+        const x2 = p.x + p.wind * 2.7;
+        const y2 = p.y + p.len;
+        const rainGradient = ctx.createLinearGradient(p.x, p.y, x2, y2);
+        rainGradient.addColorStop(0, "rgba(210,230,255,0)");
+        rainGradient.addColorStop(0.35, `rgba(145,190,238,${p.opacity})`);
+        rainGradient.addColorStop(1, `rgba(235,246,255,${p.opacity * 0.58})`);
         ctx.beginPath();
-        ctx.strokeStyle = `rgba(70,100,140,${p.opacity + 0.25})`;
+        ctx.strokeStyle = rainGradient;
         ctx.lineWidth = p.width;
+        ctx.lineCap = "round";
         ctx.moveTo(p.x, p.y);
-        ctx.lineTo(p.x + p.wind * 2.5, p.y + p.len);
+        ctx.lineTo(x2, y2);
         ctx.stroke();
         p.y += p.speed;
         p.x += p.wind;
         if (p.y > h) {
-          splashes.push({ x: p.x, y: h - 2, r: 1, opacity: 0.45 });
+          splashes.push({ x: p.x, y: h - 2, r: 1, opacity: 0.32 * p.depth });
           p.y = -20;
           p.x = Math.random() * w;
         }
         if (p.x > w + 20) p.x = -20;
       });
+      ctx.restore();
+
       for (let i = splashes.length - 1; i >= 0; i--) {
         const s = splashes[i];
         ctx.beginPath();
-        ctx.strokeStyle = `rgba(70,100,140,${s.opacity})`;
+        ctx.strokeStyle = `rgba(210,232,255,${s.opacity})`;
         ctx.lineWidth = 1;
         ctx.ellipse(s.x, s.y, s.r, s.r * 0.35, 0, 0, Math.PI * 2);
         ctx.stroke();
