@@ -7,6 +7,12 @@
   let splashes = [];
   let currentEffect = "default";
   let flashOpacity = 0;
+  const cloudSprites = {
+    day: new Image(),
+    night: new Image(),
+  };
+  cloudSprites.day.src = "assets/clouds/cloud-day.png";
+  cloudSprites.night.src = "assets/clouds/cloud-night.png";
 
   function resize() {
     canvas.width = window.innerWidth;
@@ -241,27 +247,28 @@
           opacity: 0.4 + Math.random() * 0.6,
         });
       }
-    } else if (effect === "clouds" || effect === "fog") {
-      const count = effect === "fog" ? 8 : isNight ? 7 : 7;
+    } else if (effect === "clouds") {
+      const count = isNight ? 5 : 5;
       for (let i = 0; i < count; i++) {
-        const size = isNight ? 95 + Math.random() * 145 : 92 + Math.random() * 130;
+        const width = isNight ? 360 + Math.random() * 420 : 300 + Math.random() * 360;
+        particles.push({
+          x: Math.random() * (w + width) - width * 0.5,
+          y: Math.random() * h * (isNight ? 0.34 : 0.32),
+          width,
+          speed: 0.08 + Math.random() * 0.16,
+          opacity: isNight ? 0.48 + Math.random() * 0.22 : 0.42 + Math.random() * 0.2,
+          sprite: isNight ? "night" : "day",
+        });
+      }
+    } else if (effect === "fog") {
+      for (let i = 0; i < 8; i++) {
+        const size = 90 + Math.random() * 150;
         particles.push({
           x: Math.random() * w,
-          y: effect === "fog" ? Math.random() * h : Math.random() * h * (isNight ? 0.45 : 0.38),
+          y: Math.random() * h,
           size,
           speed: 0.12 + Math.random() * 0.25,
-          opacity: effect === "fog"
-            ? 0.05 + Math.random() * 0.07
-            : isNight
-              ? 0.08 + Math.random() * 0.075
-              : 0.065 + Math.random() * 0.065,
-          lobes: [
-            { x: -0.7, y: 0.05, rx: 0.58, ry: 0.28 },
-            { x: -0.32, y: -0.12, rx: 0.55, ry: 0.33 },
-            { x: 0.12, y: -0.18, rx: 0.72, ry: 0.39 },
-            { x: 0.58, y: 0.02, rx: 0.62, ry: 0.31 },
-            { x: 0.02, y: 0.15, rx: 1.05, ry: 0.28 },
-          ],
+          opacity: 0.05 + Math.random() * 0.07,
         });
       }
     }
@@ -315,7 +322,24 @@
         if (p.x > w) p.x = 0;
         if (p.x < 0) p.x = w;
       });
-    } else if (currentEffect === "clouds" || currentEffect === "fog") {
+    } else if (currentEffect === "clouds") {
+      particles.forEach((p) => {
+        const sprite = cloudSprites[p.sprite || (isNight ? "night" : "day")];
+        if (sprite.complete && sprite.naturalWidth) {
+          const height = p.width * (sprite.naturalHeight / sprite.naturalWidth);
+          ctx.save();
+          ctx.globalAlpha = p.opacity;
+          ctx.drawImage(sprite, p.x, p.y, p.width, height);
+          ctx.restore();
+        }
+
+        p.x += p.speed;
+        if (p.x > w + p.width * 0.2) {
+          p.x = -p.width;
+          p.y = Math.random() * h * (isNight ? 0.34 : 0.32);
+        }
+      });
+    } else if (currentEffect === "fog") {
       particles.forEach((p) => {
         const cloudGradient = ctx.createRadialGradient(
           p.x - p.size * 0.2,
@@ -332,36 +356,15 @@
         cloudGradient.addColorStop(1, `rgba(${mid},${mid + 8},${mid + 24},0)`);
 
         ctx.save();
-        ctx.filter = currentEffect === "fog" ? "blur(14px)" : isNight ? "blur(5px)" : "blur(2.5px)";
+        ctx.filter = "blur(14px)";
         ctx.fillStyle = cloudGradient;
-        p.lobes.forEach((lobe) => {
-          ctx.beginPath();
-          ctx.ellipse(
-            p.x + lobe.x * p.size,
-            p.y + lobe.y * p.size,
-            lobe.rx * p.size,
-            lobe.ry * p.size,
-            0,
-            0,
-            Math.PI * 2
-          );
-          ctx.fill();
-        });
+        ctx.beginPath();
+        ctx.ellipse(p.x, p.y, p.size, p.size * 0.55, 0, 0, Math.PI * 2);
+        ctx.fill();
         ctx.restore();
 
-        if (!isNight && currentEffect !== "fog") {
-          ctx.save();
-          ctx.filter = "blur(1px)";
-          ctx.strokeStyle = `rgba(255,255,255,${p.opacity * 0.75})`;
-          ctx.lineWidth = 1.2;
-          ctx.beginPath();
-          ctx.ellipse(p.x, p.y - p.size * 0.08, p.size * 0.95, p.size * 0.28, 0, Math.PI * 1.02, Math.PI * 1.92);
-          ctx.stroke();
-          ctx.restore();
-        }
-
         ctx.save();
-        ctx.filter = isNight ? "blur(16px)" : "blur(10px)";
+        ctx.filter = "blur(16px)";
         ctx.fillStyle = `rgba(14,18,34,${isNight ? p.opacity * 0.62 : p.opacity * 0.08})`;
         ctx.beginPath();
         ctx.ellipse(p.x + p.size * 0.15, p.y + p.size * 0.2, p.size * 0.95, p.size * 0.22, 0, 0, Math.PI * 2);
