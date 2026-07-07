@@ -47,20 +47,20 @@
         border-radius: 50%;
       }
       #weather-sun {
-        width: 88px;
-        height: 88px;
+        width: 126px;
+        height: 126px;
         opacity: 0;
         background:
           radial-gradient(circle, rgba(255,244,184,0.34) 0 26%, rgba(255,198,73,0.15) 48%, transparent 73%),
           url("assets/sky/sun.png") center/contain no-repeat;
-        filter: drop-shadow(0 0 18px rgba(255,221,112,0.55)) drop-shadow(0 0 46px rgba(255,195,58,0.32));
+        filter: drop-shadow(0 0 22px rgba(255,221,112,0.58)) drop-shadow(0 0 58px rgba(255,195,58,0.36));
       }
       #weather-moon {
-        width: 94px;
-        height: 94px;
+        width: 112px;
+        height: 112px;
         opacity: 0;
         background: url("assets/sky/moon.png") center/contain no-repeat;
-        filter: drop-shadow(0 0 16px rgba(230,236,252,0.48)) drop-shadow(0 0 50px rgba(155,174,215,0.24));
+        filter: drop-shadow(0 0 18px rgba(230,236,252,0.5)) drop-shadow(0 0 58px rgba(155,174,215,0.26));
       }
       #weather-moon::before {
         content: "";
@@ -82,8 +82,8 @@
         100% { left: 112%; top: 60%; opacity: 0; }
       }
       @media (max-width: 680px) {
-        #weather-sun  { width: 62px; height: 62px; }
-        #weather-moon { width: 72px; height: 72px; }
+        #weather-sun  { width: 82px; height: 82px; }
+        #weather-moon { width: 88px; height: 88px; }
       }
     `;
     document.head.appendChild(style);
@@ -343,6 +343,7 @@
           const height = p.width * (sprite.naturalHeight / sprite.naturalWidth);
           ctx.save();
           ctx.globalAlpha = p.opacity;
+          ctx.filter = isNight ? "saturate(1.16) hue-rotate(5deg)" : "saturate(1.18) hue-rotate(7deg) brightness(1.04)";
           ctx.drawImage(sprite, p.x, p.y, p.width, height);
           ctx.restore();
         }
