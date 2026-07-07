@@ -242,9 +242,9 @@
         });
       }
     } else if (effect === "clouds" || effect === "fog") {
-      const count = effect === "fog" ? 8 : isNight ? 9 : 6;
+      const count = effect === "fog" ? 8 : isNight ? 7 : 7;
       for (let i = 0; i < count; i++) {
-        const size = isNight ? 100 + Math.random() * 170 : 75 + Math.random() * 120;
+        const size = isNight ? 95 + Math.random() * 145 : 92 + Math.random() * 130;
         particles.push({
           x: Math.random() * w,
           y: effect === "fog" ? Math.random() * h : Math.random() * h * (isNight ? 0.45 : 0.38),
@@ -253,8 +253,8 @@
           opacity: effect === "fog"
             ? 0.05 + Math.random() * 0.07
             : isNight
-              ? 0.1 + Math.random() * 0.1
-              : 0.045 + Math.random() * 0.055,
+              ? 0.08 + Math.random() * 0.075
+              : 0.065 + Math.random() * 0.065,
           lobes: [
             { x: -0.7, y: 0.05, rx: 0.58, ry: 0.28 },
             { x: -0.32, y: -0.12, rx: 0.55, ry: 0.33 },
@@ -332,7 +332,7 @@
         cloudGradient.addColorStop(1, `rgba(${mid},${mid + 8},${mid + 24},0)`);
 
         ctx.save();
-        ctx.filter = currentEffect === "fog" ? "blur(14px)" : isNight ? "blur(5px)" : "blur(2px)";
+        ctx.filter = currentEffect === "fog" ? "blur(14px)" : isNight ? "blur(5px)" : "blur(2.5px)";
         ctx.fillStyle = cloudGradient;
         p.lobes.forEach((lobe) => {
           ctx.beginPath();
@@ -361,8 +361,8 @@
         }
 
         ctx.save();
-        ctx.filter = isNight ? "blur(18px)" : "blur(10px)";
-        ctx.fillStyle = `rgba(14,18,34,${isNight ? p.opacity * 0.8 : p.opacity * 0.08})`;
+        ctx.filter = isNight ? "blur(16px)" : "blur(10px)";
+        ctx.fillStyle = `rgba(14,18,34,${isNight ? p.opacity * 0.62 : p.opacity * 0.08})`;
         ctx.beginPath();
         ctx.ellipse(p.x + p.size * 0.15, p.y + p.size * 0.2, p.size * 0.95, p.size * 0.22, 0, 0, Math.PI * 2);
         ctx.fill();
