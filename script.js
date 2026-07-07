@@ -13,6 +13,8 @@ const locationName = document.getElementById("location");
 const highLow = document.getElementById("high-low");
 const precipToday = document.getElementById("precip-today");
 const precipNote = document.getElementById("precip-note");
+const radarMap = document.getElementById("radar-map");
+const radarStatus = document.getElementById("radar-status");
 const favoriteCityButton = document.getElementById("favorite-city-btn");
 const favoriteCities = document.getElementById("favorite-cities");
 const weatherAlerts = document.getElementById("weather-alerts");
@@ -30,6 +32,7 @@ let activePlace = null;
 let suggestionTimer = null;
 let suggestionItems = [];
 let activeSuggestionIndex = -1;
+let radarRequestId = 0;
 
 const valueOrNA = (value) => (value === undefined || value === null ? "N/A" : value);
 const isNumber = (value) => Number.isFinite(Number(value));
@@ -551,6 +554,86 @@ function renderPrecipitation(precipitation) {
   precipNote.textContent = "No measurable rain expected today or tomorrow.";
 }
 
+function tilePoint(latitude, longitude, zoom) {
+  const latRad = (Number(latitude) * Math.PI) / 180;
+  const scale = 2 ** zoom;
+  const x = ((Number(longitude) + 180) / 360) * scale;
+  const y = (1 - Math.log(Math.tan(latRad) + 1 / Math.cos(latRad)) / Math.PI) / 2 * scale;
+  return { x, y };
+}
+
+function createTile(src, x, y, className) {
+  const img = document.createElement("img");
+  img.className = className;
+  img.src = src;
+  img.alt = "";
+  img.loading = "lazy";
+  img.style.left = `${x * 256}px`;
+  img.style.top = `${y * 256}px`;
+  return img;
+}
+
+async function renderRadarMap(place) {
+  if (!radarMap || !place || !isNumber(place.latitude) || !isNumber(place.longitude)) return;
+  const requestId = ++radarRequestId;
+  radarMap.replaceChildren();
+  const loading = document.createElement("p");
+  loading.className = "radar-status";
+  loading.textContent = "Loading precipitation map...";
+  radarMap.append(loading);
+
+  try {
+    const response = await fetch("https://api.rainviewer.com/public/weather-maps.json");
+    if (!response.ok) throw new Error("Radar request failed");
+    const data = await response.json();
+    const frames = [
+      ...((data.radar && data.radar.past) || []),
+      ...((data.radar && data.radar.nowcast) || []),
+    ];
+    const frame = frames[frames.length - 1];
+    if (!frame || !data.host) throw new Error("No radar frame available");
+    if (requestId !== radarRequestId) return;
+
+    const zoom = 8;
+    const point = tilePoint(place.latitude, place.longitude, zoom);
+    const startX = Math.floor(point.x) - 1;
+    const startY = Math.floor(point.y) - 1;
+    const centerX = (point.x - startX) * 256;
+    const centerY = (point.y - startY) * 256;
+    const offsetX = 384 - centerX;
+    const offsetY = 384 - centerY;
+    const layer = document.createElement("div");
+    const credit = document.createElement("span");
+    const marker = document.createElement("span");
+
+    layer.className = "radar-tile-layer";
+    layer.style.transform = `translate(${offsetX}px, ${offsetY}px)`;
+
+    for (let y = 0; y < 3; y += 1) {
+      for (let x = 0; x < 3; x += 1) {
+        const tileX = startX + x;
+        const tileY = startY + y;
+        layer.append(
+          createTile(`https://tile.openstreetmap.org/${zoom}/${tileX}/${tileY}.png`, x, y, "radar-base-tile"),
+          createTile(`${data.host}${frame.path}/256/${zoom}/${tileX}/${tileY}/2/1_1.png`, x, y, "radar-rain-tile")
+        );
+      }
+    }
+
+    marker.className = "radar-city-marker";
+    credit.className = "radar-credit";
+    credit.textContent = "Radar: RainViewer | Map: OpenStreetMap";
+
+    radarMap.replaceChildren(layer, marker, credit);
+  } catch (error) {
+    radarMap.replaceChildren();
+    const message = document.createElement("p");
+    message.className = "radar-status";
+    message.textContent = "Radar map is unavailable right now.";
+    radarMap.append(message);
+  }
+}
+
 function buildAlerts(data) {
   const alerts = [];
   const hourlyItems = data.hourly || [];
@@ -814,6 +897,7 @@ async function showWeather(city) {
   forecastInsight.textContent = forecastSummary(data);
   renderHourly(data.hourly || []);
   renderDaily(data.daily || []);
+  renderRadarMap(data.place);
   renderPrecipitation(data.precipitation || {});
   renderAirQuality(data.airQuality || {});
   renderAlerts(data);
