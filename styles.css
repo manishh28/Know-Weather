@@ -417,6 +417,40 @@ button:disabled {
   padding: 16px 18px;
 }
 
+.precipitation-panel {
+  display: grid;
+  gap: 16px;
+  padding: 16px 18px;
+}
+
+.precipitation-card {
+  display: grid;
+  grid-template-columns: minmax(120px, 0.65fr) minmax(0, 1fr);
+  gap: 16px;
+  align-items: end;
+}
+
+.precipitation-card strong {
+  display: block;
+  color: #fff;
+  font-size: clamp(2.2rem, 8vw, 3.5rem);
+  font-weight: 380;
+  line-height: 1;
+}
+
+.precipitation-card span,
+.precipitation-card p {
+  color: #fff;
+  font-size: clamp(0.98rem, 2.5vw, 1.18rem);
+  font-weight: 720;
+}
+
+.precipitation-card p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.35;
+}
+
 .favorites-panel,
 .alerts-panel {
   display: grid;
@@ -665,6 +699,10 @@ button:disabled {
 
   .daily-panel {
     padding: 14px;
+  }
+
+  .precipitation-card {
+    grid-template-columns: 1fr;
   }
 
   .daily-row {

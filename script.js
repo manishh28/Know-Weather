@@ -11,6 +11,8 @@ const windGust = document.getElementById("wind-gust");
 const weatherMain = document.getElementById("weather-main");
 const locationName = document.getElementById("location");
 const highLow = document.getElementById("high-low");
+const precipToday = document.getElementById("precip-today");
+const precipNote = document.getElementById("precip-note");
 const favoriteCityButton = document.getElementById("favorite-city-btn");
 const favoriteCities = document.getElementById("favorite-cities");
 const weatherAlerts = document.getElementById("weather-alerts");
@@ -43,6 +45,7 @@ const formatDecimal = (value, digits = 1) => {
 const formatPercent = (value) => (isNumber(value) ? `${Math.round(Number(value))}%` : "N/A");
 const formatUnit = (value, unit) => (isNumber(value) ? `${formatDecimal(value)} ${unit}` : "N/A");
 const formatMicrograms = (value) => (isNumber(value) ? `${formatDecimal(value)} ug/m3` : "N/A");
+const formatMillimeters = (value) => (isNumber(value) ? `${formatDecimal(value)} mm` : "N/A");
 
 const setStatus = (message, isError = false) => {
   statusMessage.textContent = message;
@@ -530,6 +533,24 @@ function renderAirQuality(airQuality) {
   airUv.textContent = isNumber(current.uv_index) ? formatDecimal(current.uv_index) : "N/A";
 }
 
+function renderPrecipitation(precipitation) {
+  const today = precipitation && precipitation.today;
+  const tomorrow = precipitation && precipitation.tomorrow;
+  precipToday.textContent = formatMillimeters(today);
+
+  if (isNumber(tomorrow) && Number(tomorrow) > 0) {
+    precipNote.textContent = `${formatMillimeters(tomorrow)} expected tomorrow.`;
+    return;
+  }
+
+  if (isNumber(today) && Number(today) > 0) {
+    precipNote.textContent = "Rain is expected today, with little expected tomorrow.";
+    return;
+  }
+
+  precipNote.textContent = "No measurable rain expected today or tomorrow.";
+}
+
 function buildAlerts(data) {
   const alerts = [];
   const hourlyItems = data.hourly || [];
@@ -667,7 +688,7 @@ async function getWeather(city) {
         `?latitude=${place.latitude}&longitude=${place.longitude}` +
         `&current=temperature_2m,relative_humidity_2m,apparent_temperature,is_day,weather_code,wind_speed_10m,wind_gusts_10m` +
         `&hourly=temperature_2m,weather_code,precipitation_probability` +
-        `&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max,sunrise,sunset` +
+        `&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max,precipitation_sum,sunrise,sunset` +
         `&past_days=1` +
         `&forecast_days=${DAILY_FORECAST_DAYS}` +
         `&wind_speed_unit=ms` +
@@ -706,6 +727,8 @@ async function getWeather(city) {
     const icon = iconUrl(condition[2], night);
     const hourlyItems = buildHourlyForecast(hourly, daily, current.time);
     const dailyItems = buildDailyForecast(daily, current.time);
+    const precipitationToday = daily.precipitation_sum && daily.precipitation_sum[todayIndex];
+    const precipitationTomorrow = daily.precipitation_sum && daily.precipitation_sum[todayIndex + 1];
 
     return {
       weather: [{
@@ -723,6 +746,10 @@ async function getWeather(city) {
       wind: {
         speed: current.wind_speed_10m,
         gust: current.wind_gusts_10m,
+      },
+      precipitation: {
+        today: precipitationToday,
+        tomorrow: precipitationTomorrow,
       },
       sun: { ...sunCycle, isNight: night },
       hourly: hourlyItems,
@@ -787,6 +814,7 @@ async function showWeather(city) {
   forecastInsight.textContent = forecastSummary(data);
   renderHourly(data.hourly || []);
   renderDaily(data.daily || []);
+  renderPrecipitation(data.precipitation || {});
   renderAirQuality(data.airQuality || {});
   renderAlerts(data);
   updateFavoriteButton();
