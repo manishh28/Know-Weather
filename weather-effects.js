@@ -242,15 +242,19 @@
         });
       }
     } else if (effect === "clouds" || effect === "fog") {
-      const count = effect === "fog" ? 8 : 5;
+      const count = effect === "fog" ? 8 : isNight ? 9 : 6;
       for (let i = 0; i < count; i++) {
-        const size = 90 + Math.random() * 150;
+        const size = isNight ? 100 + Math.random() * 170 : 75 + Math.random() * 120;
         particles.push({
           x: Math.random() * w,
-          y: effect === "fog" ? Math.random() * h : Math.random() * h * 0.4,
+          y: effect === "fog" ? Math.random() * h : Math.random() * h * (isNight ? 0.45 : 0.38),
           size,
           speed: 0.12 + Math.random() * 0.25,
-          opacity: effect === "fog" ? 0.05 + Math.random() * 0.07 : 0.07 + Math.random() * 0.1,
+          opacity: effect === "fog"
+            ? 0.05 + Math.random() * 0.07
+            : isNight
+              ? 0.1 + Math.random() * 0.1
+              : 0.045 + Math.random() * 0.055,
           lobes: [
             { x: -0.7, y: 0.05, rx: 0.58, ry: 0.28 },
             { x: -0.32, y: -0.12, rx: 0.55, ry: 0.33 },
@@ -321,14 +325,14 @@
           p.y,
           p.size * 1.25
         );
-        const light = isNight ? 185 : 255;
-        const mid = isNight ? 130 : 226;
+        const light = isNight ? 190 : 255;
+        const mid = isNight ? 132 : 238;
         cloudGradient.addColorStop(0, `rgba(${light},${light + 4},${light + 16},${p.opacity * 1.25})`);
-        cloudGradient.addColorStop(0.46, `rgba(${mid},${mid + 8},${mid + 24},${p.opacity})`);
+        cloudGradient.addColorStop(0.42, `rgba(${mid},${mid + 8},${mid + 24},${p.opacity})`);
         cloudGradient.addColorStop(1, `rgba(${mid},${mid + 8},${mid + 24},0)`);
 
         ctx.save();
-        ctx.filter = currentEffect === "fog" ? "blur(14px)" : "blur(7px)";
+        ctx.filter = currentEffect === "fog" ? "blur(14px)" : isNight ? "blur(5px)" : "blur(2px)";
         ctx.fillStyle = cloudGradient;
         p.lobes.forEach((lobe) => {
           ctx.beginPath();
@@ -345,9 +349,20 @@
         });
         ctx.restore();
 
+        if (!isNight && currentEffect !== "fog") {
+          ctx.save();
+          ctx.filter = "blur(1px)";
+          ctx.strokeStyle = `rgba(255,255,255,${p.opacity * 0.75})`;
+          ctx.lineWidth = 1.2;
+          ctx.beginPath();
+          ctx.ellipse(p.x, p.y - p.size * 0.08, p.size * 0.95, p.size * 0.28, 0, Math.PI * 1.02, Math.PI * 1.92);
+          ctx.stroke();
+          ctx.restore();
+        }
+
         ctx.save();
-        ctx.filter = "blur(20px)";
-        ctx.fillStyle = `rgba(14,18,34,${isNight ? p.opacity * 0.7 : p.opacity * 0.18})`;
+        ctx.filter = isNight ? "blur(18px)" : "blur(10px)";
+        ctx.fillStyle = `rgba(14,18,34,${isNight ? p.opacity * 0.8 : p.opacity * 0.08})`;
         ctx.beginPath();
         ctx.ellipse(p.x + p.size * 0.15, p.y + p.size * 0.2, p.size * 0.95, p.size * 0.22, 0, 0, Math.PI * 2);
         ctx.fill();

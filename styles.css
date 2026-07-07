@@ -84,11 +84,12 @@ body[data-period="day"]::before {
 }
 
 body[data-period="day"]::after {
-  opacity: 0.38;
+  opacity: 0.1;
   background:
-    radial-gradient(ellipse at 18% 20%, rgba(255, 255, 255, 0.62) 0 12%, transparent 36%),
-    radial-gradient(ellipse at 74% 18%, rgba(255, 255, 255, 0.46) 0 13%, transparent 34%),
-    radial-gradient(ellipse at 45% 48%, rgba(255, 255, 255, 0.34) 0 18%, transparent 44%);
+    radial-gradient(ellipse at 18% 20%, rgba(255, 255, 255, 0.3) 0 10%, transparent 30%),
+    radial-gradient(ellipse at 74% 18%, rgba(255, 255, 255, 0.24) 0 11%, transparent 30%),
+    radial-gradient(ellipse at 45% 48%, rgba(255, 255, 255, 0.2) 0 14%, transparent 36%);
+  filter: blur(8px);
 }
 
 #weather-canvas {
