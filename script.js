@@ -34,7 +34,9 @@ const DAILY_FORECAST_DAYS = 7;
 const HOURLY_FORECAST_HOURS = 24;
 const FAVORITES_KEY = "favoriteCities";
 const WEATHER_ASSISTANT_ENDPOINT =
-  window.KNOW_WEATHER_AI_ENDPOINT || localStorage.getItem("knowWeatherAssistantEndpoint") || "";
+  window.KNOW_WEATHER_AI_ENDPOINT ||
+  localStorage.getItem("knowWeatherAssistantEndpoint") ||
+  "https://know-weather-assistant.manishh28.workers.dev";
 let activePlace = null;
 let currentWeatherSnapshot = null;
 let suggestionTimer = null;
