@@ -1,0 +1,7 @@
+name = "know-weather-assistant"
+main = "src/index.js"
+compatibility_date = "2026-07-24"
+
+[vars]
+ALLOWED_ORIGIN = "https://manishh28.github.io"
+OPENAI_MODEL = "gpt-5-mini"

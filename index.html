@@ -64,6 +64,33 @@
         <p id="forecast-insight" class="forecast-insight">
           Search a city to see what the sky is doing next.
         </p>
+        <div class="assistant-card" aria-label="AI weather assistant">
+          <div class="assistant-heading">
+            <div>
+              <span class="assistant-kicker">AI Assistant</span>
+              <h2>Ask about this weather</h2>
+            </div>
+            <span class="assistant-orb" aria-hidden="true"></span>
+          </div>
+          <form id="assistant-form" class="assistant-form">
+            <input
+              id="assistant-question"
+              type="text"
+              placeholder="Should I carry an umbrella today?"
+              aria-label="Ask weather assistant"
+              autocomplete="off"
+            />
+            <button id="assistant-submit" type="submit">Ask</button>
+          </form>
+          <div class="assistant-prompts" aria-label="Quick weather questions">
+            <button type="button" data-question="Should I carry an umbrella today?">Umbrella</button>
+            <button type="button" data-question="What should I wear today?">Clothes</button>
+            <button type="button" data-question="Is it safe to travel tonight?">Travel</button>
+          </div>
+          <p id="assistant-answer" class="assistant-answer">
+            Search a city, then ask the assistant for simple weather advice.
+          </p>
+        </div>
         <div class="panel-title hourly-title">
           <span aria-hidden="true">24</span>
           <h2>24-Hour Forecast</h2>

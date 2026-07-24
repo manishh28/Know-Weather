@@ -25,10 +25,18 @@ const airUv = document.getElementById("air-uv");
 const forecastInsight = document.getElementById("forecast-insight");
 const hourlyForecast = document.getElementById("hourly-forecast");
 const dailyForecast = document.getElementById("daily-forecast");
+const assistantForm = document.getElementById("assistant-form");
+const assistantQuestion = document.getElementById("assistant-question");
+const assistantSubmit = document.getElementById("assistant-submit");
+const assistantAnswer = document.getElementById("assistant-answer");
+const assistantPrompts = document.querySelectorAll("[data-question]");
 const DAILY_FORECAST_DAYS = 7;
 const HOURLY_FORECAST_HOURS = 24;
 const FAVORITES_KEY = "favoriteCities";
+const WEATHER_ASSISTANT_ENDPOINT =
+  window.KNOW_WEATHER_AI_ENDPOINT || localStorage.getItem("knowWeatherAssistantEndpoint") || "";
 let activePlace = null;
+let currentWeatherSnapshot = null;
 let suggestionTimer = null;
 let suggestionItems = [];
 let activeSuggestionIndex = -1;
@@ -753,6 +761,94 @@ function forecastSummary(data) {
   return `Tomorrow should feel similar, with a high near ${tomorrowHigh}\u00b0.`;
 }
 
+function buildAssistantSnapshot(data) {
+  const weather = data.weather && data.weather[0] ? data.weather[0] : {};
+  return {
+    city: data.name,
+    condition: weather.description,
+    temperature: formatTemp(data.main && data.main.temp),
+    feelsLike: formatTemp(data.main && data.main.feels_like),
+    high: formatTemp(data.main && data.main.temp_max),
+    low: formatTemp(data.main && data.main.temp_min),
+    humidity: formatPercent(data.main && data.main.humidity),
+    wind: formatUnit(data.wind && data.wind.speed, "m/s"),
+    windGust: formatUnit(data.wind && data.wind.gust, "m/s"),
+    precipitation: {
+      today: formatMillimeters(data.precipitation && data.precipitation.today),
+      tomorrow: formatMillimeters(data.precipitation && data.precipitation.tomorrow),
+    },
+    airQuality: {
+      usAqi: aqiLabel(data.airQuality && data.airQuality.current && data.airQuality.current.us_aqi),
+      pm25: formatMicrograms(data.airQuality && data.airQuality.current && data.airQuality.current.pm2_5),
+      pm10: formatMicrograms(data.airQuality && data.airQuality.current && data.airQuality.current.pm10),
+      uvIndex: isNumber(data.airQuality && data.airQuality.current && data.airQuality.current.uv_index)
+        ? formatDecimal(data.airQuality.current.uv_index)
+        : "N/A",
+    },
+    isNight: Boolean(data.isNight),
+    hourly: (data.hourly || []).slice(0, 24).map((item) => ({
+      time: item.label,
+      temperature: formatTemp(item.temp),
+      rainChance: formatPercent(item.precipitation),
+      condition: item.description,
+    })),
+    daily: (data.daily || []).slice(0, DAILY_FORECAST_DAYS).map((item) => ({
+      day: item.day,
+      high: formatTemp(item.max),
+      low: formatTemp(item.min),
+      rainChance: formatPercent(item.precipitation),
+      condition: item.description,
+    })),
+  };
+}
+
+function setAssistantAnswer(message, isError = false) {
+  if (!assistantAnswer) return;
+  assistantAnswer.textContent = message;
+  assistantAnswer.classList.toggle("error", isError);
+}
+
+async function askWeatherAssistant(question) {
+  if (!assistantAnswer || !assistantSubmit) return;
+
+  if (!currentWeatherSnapshot) {
+    setAssistantAnswer("Search a city first so I can use real weather data.", true);
+    return;
+  }
+
+  if (!WEATHER_ASSISTANT_ENDPOINT) {
+    setAssistantAnswer("AI backend is ready in code. Add your Cloudflare Worker URL in script.js to enable live answers.", true);
+    return;
+  }
+
+  assistantSubmit.disabled = true;
+  setAssistantAnswer("Thinking through the weather...");
+
+  try {
+    const response = await fetch(WEATHER_ASSISTANT_ENDPOINT, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        question,
+        weather: currentWeatherSnapshot,
+      }),
+    });
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error || "The assistant could not answer right now.");
+    }
+
+    setAssistantAnswer(data.answer || "No assistant answer came back yet.");
+  } catch (error) {
+    setAssistantAnswer(error.message || "The assistant is unavailable right now.", true);
+  } finally {
+    assistantSubmit.disabled = false;
+  }
+}
+
 async function getWeather(city) {
   try {
     let place = typeof city === "object" && city !== null ? city : null;
@@ -898,6 +994,7 @@ async function showWeather(city) {
   locationName.textContent = valueOrNA(data.name);
   highLow.textContent = `H:${formatTemp(data.main && data.main.temp_max)} L:${formatTemp(data.main && data.main.temp_min)}`;
   forecastInsight.textContent = forecastSummary(data);
+  currentWeatherSnapshot = buildAssistantSnapshot(data);
   renderHourly(data.hourly || []);
   renderDaily(data.daily || []);
   renderRadarMap(data.place);
@@ -929,6 +1026,23 @@ weatherButton.addEventListener("click", () => {
 if (favoriteCityButton) {
   favoriteCityButton.addEventListener("click", toggleFavoriteCity);
 }
+
+if (assistantForm) {
+  assistantForm.addEventListener("submit", (event) => {
+    event.preventDefault();
+    const question = assistantQuestion.value.trim();
+    if (!question) return;
+    askWeatherAssistant(question);
+  });
+}
+
+assistantPrompts.forEach((button) => {
+  button.addEventListener("click", () => {
+    const question = button.dataset.question || "";
+    assistantQuestion.value = question;
+    askWeatherAssistant(question);
+  });
+});
 
 cityInput.addEventListener("input", queueCitySuggestions);
 
