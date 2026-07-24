@@ -269,6 +269,12 @@ function dateMs(value) {
   return Number.isNaN(ms) ? null : ms;
 }
 
+function cityLocalIso(utcOffsetSeconds, fallbackTime) {
+  const offset = Number(utcOffsetSeconds);
+  if (!Number.isFinite(offset)) return fallbackTime;
+  return new Date(Date.now() + offset * 1000).toISOString().slice(0, 19);
+}
+
 function dailyIndexForTime(daily, time) {
   const date = String(time || "").slice(0, 10);
   const index = (daily.time || []).findIndex((item) => item === date);
@@ -276,16 +282,18 @@ function dailyIndexForTime(daily, time) {
 }
 
 function isNightTime(sunriseStr, sunsetStr, nowStr, isDayFlag) {
+  if (sunriseStr && sunsetStr && nowStr) {
+    const sunrise = dateMs(sunriseStr);
+    const sunset = dateMs(sunsetStr);
+    const now = dateMs(nowStr);
+    if (sunrise !== null && sunset !== null && now !== null) {
+      return now < sunrise || now >= sunset;
+    }
+  }
+
   if (isDayFlag === 1) return false;
   if (isDayFlag === 0) return true;
-  if (!sunriseStr || !sunsetStr || !nowStr) return false;
-
-  const sunrise = dateMs(sunriseStr);
-  const sunset = dateMs(sunsetStr);
-  const now = dateMs(nowStr);
-  if (sunrise === null || sunset === null || now === null) return false;
-
-  return now < sunrise || now > sunset;
+  return false;
 }
 
 function isNightAtTime(time, daily) {
@@ -899,13 +907,14 @@ async function getWeather(city) {
     const current = weatherData.current || {};
     const daily = weatherData.daily || {};
     const hourly = weatherData.hourly || {};
-    const todayIndex = dailyIndexForTime(daily, current.time);
-    const sunCycle = getSunCycle(daily, current.time);
+    const cityNow = cityLocalIso(weatherData.utc_offset_seconds, current.time);
+    const todayIndex = dailyIndexForTime(daily, cityNow);
+    const sunCycle = getSunCycle(daily, cityNow);
     const condition = conditionForCode(current.weather_code);
     const night = isNightTime(
       sunCycle.sunriseToday,
       sunCycle.sunsetToday,
-      current.time,
+      cityNow,
       current.is_day
     );
     const icon = iconUrl(condition[2], night);
