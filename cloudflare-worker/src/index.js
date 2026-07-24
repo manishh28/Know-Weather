@@ -12,8 +12,8 @@ export default {
       return json({ error: "Use POST / with a weather question." }, 405, cors);
     }
 
-    if (!env.OPENAI_API_KEY) {
-      return json({ error: "OPENAI_API_KEY is not configured in Cloudflare." }, 500, cors);
+    if (!env.AI) {
+      return json({ error: "Cloudflare Workers AI is not configured." }, 500, cors);
     }
 
     let body;
@@ -30,39 +30,40 @@ export default {
       return json({ error: "Ask a weather question first." }, 400, cors);
     }
 
-    const response = await fetch("https://api.openai.com/v1/responses", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${env.OPENAI_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: env.OPENAI_MODEL || "gpt-5-mini",
-        input: [
-          {
-            role: "system",
-            content:
-              "You are Know Weather's friendly weather assistant. Give short, practical advice based only on the supplied weather data. Mention umbrella, clothing, travel, heat, UV, air quality, or rain only when relevant. Do not invent unavailable data. Keep the answer under 75 words.",
-          },
-          {
-            role: "user",
-            content: `Question: ${question}\n\nWeather data:\n${JSON.stringify(compactWeather(weather))}`,
-          },
-        ],
-      }),
-    });
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      return json(
-        { error: data.error?.message || "The AI assistant could not answer right now." },
-        response.status,
-        cors
+    let result;
+    try {
+      result = await env.AI.run(
+        env.AI_MODEL || "@cf/meta/llama-3.1-8b-instruct-fast",
+        {
+          messages: [
+            {
+              role: "system",
+              content:
+                "You are Know Weather's friendly weather assistant. Give short, practical advice based only on the supplied weather data. Mention umbrella, clothing, travel, heat, UV, air quality, or rain only when relevant. Do not invent unavailable data. Keep the answer under 75 words.",
+            },
+            {
+              role: "user",
+              content: `Question: ${question}\n\nWeather data:\n${JSON.stringify(compactWeather(weather))}`,
+            },
+          ],
+          max_tokens: 180,
+          temperature: 0.35,
+        }
       );
+    } catch (error) {
+      return json({ error: "The AI assistant could not answer right now." }, 502, cors);
     }
 
-    return json({ answer: data.output_text || "I could not generate advice for this weather yet." }, 200, cors);
+    const answer =
+      typeof result === "string"
+        ? result
+        : result?.response || result?.result?.response || "";
+
+    return json(
+      { answer: cleanText(answer, 700) || "I could not generate advice for this weather yet." },
+      200,
+      cors
+    );
   },
 };
 
