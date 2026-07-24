@@ -113,11 +113,10 @@ body[data-period="day"]::after {
 }
 
 .search-panel {
-  position: absolute;
-  top: 24px;
-  right: 24px;
+  position: relative;
   z-index: 40;
-  width: min(430px, calc(100vw - 48px));
+  width: min(100%, 430px);
+  justify-self: end;
   padding: 0;
   border: 0;
   background: transparent;
@@ -829,12 +828,6 @@ button:disabled {
     padding: 16px;
   }
 
-  .search-panel {
-    top: 16px;
-    right: 16px;
-    width: min(100% - 32px, 430px);
-  }
-
   .search-actions {
     width: 100%;
     min-width: 0;
@@ -853,12 +846,6 @@ button:disabled {
   .weather-app {
     padding: 14px;
     gap: 14px;
-  }
-
-  .search-panel {
-    top: 14px;
-    right: 14px;
-    width: calc(100% - 28px);
   }
 
   .controls {
