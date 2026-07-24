@@ -113,7 +113,7 @@ body[data-period="day"]::after {
 }
 
 .search-panel {
-  position: fixed;
+  position: absolute;
   top: 24px;
   right: 24px;
   z-index: 40;
