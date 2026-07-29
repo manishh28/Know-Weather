@@ -33,10 +33,7 @@ const assistantPrompts = document.querySelectorAll("[data-question]");
 const DAILY_FORECAST_DAYS = 7;
 const HOURLY_FORECAST_HOURS = 24;
 const FAVORITES_KEY = "favoriteCities";
-const WEATHER_ASSISTANT_ENDPOINT =
-  window.KNOW_WEATHER_AI_ENDPOINT ||
-  localStorage.getItem("knowWeatherAssistantEndpoint") ||
-  "https://know-weather-assistant.manishh28.workers.dev";
+const WEATHER_ASSISTANT_ENDPOINT = "https://know-weather-ai-worker.manishh28.workers.dev";
 let activePlace = null;
 let currentWeatherSnapshot = null;
 let suggestionTimer = null;
@@ -826,11 +823,6 @@ async function askWeatherAssistant(question) {
     return;
   }
 
-  if (!WEATHER_ASSISTANT_ENDPOINT) {
-    setAssistantAnswer("AI backend is ready in code. Add your Cloudflare Worker URL in script.js to enable live answers.", true);
-    return;
-  }
-
   assistantSubmit.disabled = true;
   setAssistantAnswer("Thinking through the weather...");
 
@@ -841,24 +833,29 @@ async function askWeatherAssistant(question) {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
+        city: currentWeatherSnapshot.city,
+        temperature: currentWeatherSnapshot.temperature.replace("°", " C"),
+        feelsLike: currentWeatherSnapshot.feelsLike.replace("°", " C"),
+        humidity: currentWeatherSnapshot.humidity,
+        wind: currentWeatherSnapshot.wind,
+        windGust: currentWeatherSnapshot.windGust,
         question,
-        weather: currentWeatherSnapshot,
       }),
     });
+
     const data = await response.json();
 
     if (!response.ok) {
       throw new Error(data.error || "The assistant could not answer right now.");
     }
 
-    setAssistantAnswer(data.answer || "No assistant answer came back yet.");
+    setAssistantAnswer(data.advice || data.answer || "No assistant answer came back yet.");
   } catch (error) {
     setAssistantAnswer(error.message || "The assistant is unavailable right now.", true);
   } finally {
     assistantSubmit.disabled = false;
   }
 }
-
 async function getWeather(city) {
   try {
     let place = typeof city === "object" && city !== null ? city : null;
