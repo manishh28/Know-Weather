@@ -1,4 +1,4 @@
-﻿const cityInput = document.getElementById("city-input");
+const cityInput = document.getElementById("city-input");
 const citySuggestions = document.getElementById("city-suggestions");
 const weatherButton = document.getElementById("get-weather-btn");
 const statusMessage = document.getElementById("status-message");
@@ -834,11 +834,18 @@ async function askWeatherAssistant(question) {
       },
       body: JSON.stringify({
         city: currentWeatherSnapshot.city,
+        condition: currentWeatherSnapshot.condition,
         temperature: currentWeatherSnapshot.temperature.replace("°", " C"),
         feelsLike: currentWeatherSnapshot.feelsLike.replace("°", " C"),
+        high: currentWeatherSnapshot.high.replace("°", " C"),
+        low: currentWeatherSnapshot.low.replace("°", " C"),
         humidity: currentWeatherSnapshot.humidity,
         wind: currentWeatherSnapshot.wind,
         windGust: currentWeatherSnapshot.windGust,
+        precipitation: currentWeatherSnapshot.precipitation,
+        airQuality: currentWeatherSnapshot.airQuality,
+        hourly: currentWeatherSnapshot.hourly,
+        daily: currentWeatherSnapshot.daily,
         question,
       }),
     });
@@ -1092,3 +1099,4 @@ const lastCity = localStorage.getItem("lastCity") || "Jaipur";
 cityInput.value = lastCity;
 renderFavorites();
 window.showWeather(lastCity);
+
