@@ -1,4 +1,4 @@
-const cityInput = document.getElementById("city-input");
+﻿const cityInput = document.getElementById("city-input");
 const citySuggestions = document.getElementById("city-suggestions");
 const weatherButton = document.getElementById("get-weather-btn");
 const statusMessage = document.getElementById("status-message");
