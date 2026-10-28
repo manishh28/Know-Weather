@@ -124,5 +124,10 @@
     );
   }
 
-  ReactDOM.createRoot(document.getElementById("root")).render(h(App));
+  const root = document.getElementById("root");
+
+  if (root) {
+    // The static markup in index.html keeps the weather app usable if the CDN is unavailable.
+    ReactDOM.createRoot(root).render(h(App));
+  }
 })();
