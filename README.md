@@ -10,8 +10,7 @@ https://manishh28.github.io/Know-Weather/
 
 ## Technology
 
-- React 18, used to render the application interface
-- JavaScript for weather data, search, forecasts, and UI behaviour
+- React 18, used for the complete application UI, data state, API requests, and interactions
 - CSS for responsive layout, day/night themes, and glass-style panels
 - Canvas API for animated rain, clouds, snow, fog, and lightning effects
 - Open-Meteo APIs for geocoding, live weather, forecasts, sunrise/sunset, and air quality
@@ -34,8 +33,7 @@ https://manishh28.github.io/Know-Weather/
 
 ```text
 index.html             Page shell and script loading
-react-app.js           React components that render the weather interface
-script.js              Weather APIs, forecasts, favorites, radar, and AI requests
+react-app.js           React components, API requests, state, forecasts, radar, favorites, and AI requests
 styles.css             Responsive application styling
 weather-effects.js     Canvas and sun/moon weather effects
 cloudflare-worker/     Cloudflare Workers AI backend
