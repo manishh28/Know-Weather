@@ -128,6 +128,13 @@
 
   if (root) {
     // The static markup in index.html keeps the weather app usable if the CDN is unavailable.
-    ReactDOM.createRoot(root).render(h(App));
+    const appRoot = ReactDOM.createRoot(root);
+
+    // script.js runs immediately after this file and needs the React DOM to exist first.
+    if (typeof ReactDOM.flushSync === "function") {
+      ReactDOM.flushSync(() => appRoot.render(h(App)));
+    } else {
+      appRoot.render(h(App));
+    }
   }
 })();
