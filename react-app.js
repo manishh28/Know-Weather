@@ -186,6 +186,7 @@
   function App() {
     const [query, setQuery] = useState(() => localStorage.getItem("lastCity") || "Jaipur");
     const [suggestions, setSuggestions] = useState([]);
+    const [suggestionsOpen, setSuggestionsOpen] = useState(false);
     const [activeSuggestion, setActiveSuggestion] = useState(-1);
     const [weather, setWeather] = useState(null);
     const [status, setStatus] = useState("");
@@ -198,7 +199,7 @@
     const search = useCallback(async (cityOrPlace) => {
       const searchTerm = typeof cityOrPlace === "object" ? placeSearch(cityOrPlace) : String(cityOrPlace || "").trim();
       if (!searchTerm) return;
-      setLoading(true); setStatus("Loading weather..."); setSuggestions([]); setActiveSuggestion(-1);
+      setLoading(true); setStatus("Loading weather..."); setSuggestions([]); setSuggestionsOpen(false); setActiveSuggestion(-1);
       try { const data = await fetchWeather(cityOrPlace); setWeather(data); setQuery(typeof cityOrPlace === "object" ? placeLabel(cityOrPlace) : searchTerm); localStorage.setItem("lastCity", searchTerm); setStatus(""); }
       catch (error) { setStatus(error.message || "Something went wrong. Please try again later."); }
       finally { setLoading(false); }
@@ -206,13 +207,19 @@
 
     useEffect(() => { search(query); }, []); // Load the remembered city once.
     useEffect(() => {
-      if (query.trim().length < 2 || weather?.place.name?.toLowerCase() === query.trim().toLowerCase()) { setSuggestions([]); return undefined; }
+      if (!suggestionsOpen || query.trim().length < 2 || weather?.place.name?.toLowerCase() === query.trim().toLowerCase()) { setSuggestions([]); return undefined; }
+      let cancelled = false;
       const timer = setTimeout(async () => {
-        try { const response = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(query.trim())}&count=6&language=en&format=json`); const data = await response.json(); setSuggestions(data.results || []); setActiveSuggestion(-1); }
-        catch { setSuggestions([]); }
+        try {
+          const response = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(query.trim())}&count=6&language=en&format=json`);
+          const data = await response.json();
+          if (!cancelled) { setSuggestions(data.results || []); setActiveSuggestion(-1); }
+        } catch {
+          if (!cancelled) setSuggestions([]);
+        }
       }, 220);
-      return () => clearTimeout(timer);
-    }, [query, weather]);
+      return () => { cancelled = true; clearTimeout(timer); };
+    }, [query, weather, suggestionsOpen]);
     useEffect(() => {
       if (!weather) return;
       const effect = weather.weather.main.toLowerCase().replace(/\s+/g, "-");
@@ -239,11 +246,11 @@
       catch (error) { setAssistantAnswer(error.message || "The assistant is unavailable right now."); }
       finally { setAssistantLoading(false); }
     };
-    const choose = (place) => { setQuery(placeLabel(place)); search(place); };
+    const choose = (place) => { setQuery(placeLabel(place)); setSuggestionsOpen(false); search(place); };
     const keyboardSearch = (event) => {
       if (event.key === "ArrowDown" && suggestions.length) { event.preventDefault(); setActiveSuggestion((current) => (current + 1 + suggestions.length) % suggestions.length); }
       else if (event.key === "ArrowUp" && suggestions.length) { event.preventDefault(); setActiveSuggestion((current) => (current - 1 + suggestions.length) % suggestions.length); }
-      else if (event.key === "Escape") setSuggestions([]);
+      else if (event.key === "Escape") { setSuggestions([]); setSuggestionsOpen(false); setActiveSuggestion(-1); }
       else if (event.key === "Enter") { event.preventDefault(); activeSuggestion >= 0 ? choose(suggestions[activeSuggestion]) : search(query); }
     };
     const dailyRange = useMemo(() => {
@@ -272,7 +279,7 @@
       h("canvas", { id: "weather-canvas" }),
       h("main", { className: "weather-app", "aria-live": "polite" },
         h("section", { className: "search-panel", "aria-label": "Weather search" }, h("div", { className: "search-actions" },
-          h("div", { className: "controls" }, h("input", { value: query, onChange: (event) => setQuery(event.target.value), onKeyDown: keyboardSearch, placeholder: "Search city", "aria-label": "Search city", "aria-autocomplete": "list" }), h("button", { type: "button", onClick: () => search(query), disabled: loading }, loading ? "Loading" : "Search"), suggestionList),
+          h("div", { className: "controls" }, h("input", { value: query, onChange: (event) => { setQuery(event.target.value); setSuggestionsOpen(true); }, onFocus: () => setSuggestionsOpen(true), onKeyDown: keyboardSearch, onBlur: () => setTimeout(() => { setSuggestions([]); setSuggestionsOpen(false); setActiveSuggestion(-1); }, 120), placeholder: "Search city", "aria-label": "Search city", "aria-autocomplete": "list" }), h("button", { type: "button", onClick: () => search(query), disabled: loading }, loading ? "Loading" : "Search"), suggestionList),
           h("p", { className: `status-message${status ? " error" : ""}` }, status)
         )),
         h("section", { className: "hero-weather" }, h("p", { className: "location" }, weather?.place.name || "Select a city"), h("p", { className: "hero-temperature" }, weather ? temp(weather.main.temp) : "--°"), h("p", { className: "weather-main" }, weather?.weather.description || "N/A"), h("p", { className: "high-low" }, weather ? `H:${temp(weather.main.max)} L:${temp(weather.main.min)}` : "H:--° L:--°"), weather ? h("button", { className: `favorite-city-btn${saved ? " saved" : ""}`, type: "button", onClick: toggleFavorite }, saved ? "Saved city" : "Save city") : null),
