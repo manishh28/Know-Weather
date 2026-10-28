@@ -101,6 +101,10 @@ body[data-period="day"]::after {
   pointer-events: none;
 }
 
+#root {
+  width: min(100%, 720px);
+}
+
 .weather-app {
   width: min(100%, 720px);
   min-height: calc(100vh - 36px);
